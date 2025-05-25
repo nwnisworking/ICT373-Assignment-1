@@ -1,0 +1,142 @@
+:root{
+	--color: #e12744;
+	font-family: "Funnel Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+
+  box-sizing: content-box;
+}
+
+html, body, main{
+	height: 100%;
+  min-height: 100%;
+}
+
+body{
+	margin: 0;
+}
+
+main{
+	display: flex;
+}
+
+aside{
+	padding-block: 4.5rem;
+  --padding-auto: calc((100%  - 1000px) / 4);
+  --padding-max: 50px;
+
+	&:first-child{
+    padding-left: max(calc(var(--padding-auto)), var(--padding-max));
+    padding-right: var(--padding-max);
+	}
+
+	&:last-child{
+    padding-right: max(calc(var(--padding-auto)), var(--padding-max));
+    padding-left: var(--padding-max);
+		background-color: var(--color);
+	}
+}
+
+img{
+	width: clamp(100px, 100%, 250px);
+	user-select: none;
+	margin-bottom: 1rem;
+}
+
+/* Form */
+.form-field{
+	display: flex;
+	width: clamp(200px, 100%, 350px);
+	flex-wrap: wrap;
+}
+
+label{
+	flex: 1 0 100%;
+	margin-block: 5px;
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: .85rem;
+}
+
+input, select{
+	width: 100%;
+	display: block;
+	padding: .5rem;
+  font-family: "Funnel Sans", sans-serif;
+
+	&:focus{
+    outline-color: var(--color);
+  }
+}
+
+small.input_tip{
+	margin-top: .5rem;
+	margin-bottom: 1rem;
+  font-size: .75rem;
+	flex: 1 0 100%;
+  color: var(--color);
+}
+
+input#user_dob_date,
+input#user_dob_month,
+input#user_dob_year{
+	flex: 1;
+	margin-inline: .5rem;
+	
+	&:first-of-type{
+		margin-left: 0;
+	}
+
+	&:last-of-type{
+		margin-right: 0;
+	}
+}
+
+input[type=submit]{
+	background-color: var(--color);
+	color: white;
+	font-weight: 400;
+	border: 0;
+	outline: none;
+	cursor: pointer;
+	transition: filter .25s;
+
+	&:hover,
+  &:focus{
+    filter: saturate(.7);
+  }
+}
+/* Hero */
+.tagline{
+  margin-top: 0;
+  color: white;
+  font-size: 3.25rem;
+  line-height: 3.5rem;
+  font-size: clamp(2.05rem, 3.2vw, 3.25rem);
+}
+
+@media screen and (max-width: 768px) {
+	main{
+		flex-wrap: wrap;
+	}
+
+	form, aside:first-child{
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+	}
+
+	aside{
+		&:first-child{
+			order: 2;
+		}
+
+		&:last-child{
+			order: 1;
+		}
+	}
+
+	img{
+		margin-bottom: 2rem;
+	}
+}

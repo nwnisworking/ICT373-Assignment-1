@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="shortcut icon" href="assets/favicon.ico" type="image/x-icon">
+	<!-- Google font -->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Funnel+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+	<!-- Asset -->
+	 <link href="css/style.css" rel="stylesheet" />
+	 <script src="js/main.js" defer type="module"></script>
+	<title>Murdoch University Interest Networking</title>
+</head>
+<body>
+	<main>
+		<aside>
+			<a href="https://www.murdoch.edu.au" tabindex="-1">
+      	<img class="logo" src="assets/logo.svg" alt="Murdoch University Logo" />
+    	</a>
+			<form action="https://www.it.murdoch.edu.au/cgi-bin/reply1.pl" method="get">
+				<div class="form-field">
+					<label for="user_name">Name</label>
+	        <input type="text" name="user_name" id="user_name" tabindex="1" placeholder="Daniel Atkin" />
+  	      <small class="input_tip"></small>
+				</div>
+				<div class="form-field">
+					<label for="user_phone">Phone</label>
+					<input type="text" name="user_phone" id="user_phone" tabindex="2" placeholder="(+65) 1234 5678"/>
+					<small class="input_tip"></small>
+				</div>
+				<div class="form-field">
+					<label>Date of Birth</label>
+					<input type="text" id='user_dob_date' name="user_dob_date" maxlength="2" placeholder="25" />
+					<input type="text" id='user_dob_month' name="user_dob_month" maxlength="2" placeholder="1" />
+					<input type="text" id='user_dob_year' name="user_dob_year" maxlength="4" placeholder="2025" />
+					<small class="input_tip"></small>
+				</div>
+				<div class="form-field">
+					<label for="user_interests">interests</label>
+					<select name="user_interests" id="user_interests">
+						<option disabled selected>Choose one of your interest</option>
+						<option value="1">Surfing the Web</option>
+						<option value="2">Playing Sport</option>
+						<option value="3">Listening to Music</option>
+						<option value="4">Watching TV</option>
+						<option value="5">Playing Games</option>
+						<option value="6">Community Service</option>
+						<option value="7">Daydreaming</option>
+						<option value="8">Reading</option>
+						<option value="9">Meditation</option>
+					</select>
+					<small class="input_tip"></small>
+				</div>
+				<div class="form-field">
+					<input type="submit"/>
+				</div>
+			</form>
+		</aside>
+		<aside>
+			<h1 class="tagline">Something exciting is brewing — tell us where your passion lies.</h1>
+    	<p class="description">We’re cooking up something new and we want to hear from you! Tell us your interest and we will pair you up with people who shares similar interests as you</p>
+		</aside>
+	</main>	
+</body>
+</html>
