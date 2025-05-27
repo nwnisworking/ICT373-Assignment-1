@@ -105,10 +105,11 @@ public class PayingCustomer extends Customer{
 	public void parse(CSVParser parser){
 		super.parse(parser);
 		payment_method = Transaction.getPaymentMethod(parser.getInteger());
+		payment_method.parse(parser);
 	}
 
 	@Override
 	public String toString() {
-		return 1 + "," + super.toString() + ","+ payment_method;
+		return 1 + "," + super.toString() + "," + payment_method;
 	}
 }
