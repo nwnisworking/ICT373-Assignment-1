@@ -2,6 +2,7 @@ package com.ict373.assignment1.customers;
 
 import com.ict373.assignment1.magazines.Subscription;
 import com.ict373.assignment1.utils.CSVParser;
+import com.ict373.assignment1.utils.IO;
 import com.ict373.assignment1.utils.CSVParsable;
 
 import java.util.ArrayList;
@@ -29,6 +30,11 @@ public abstract class Customer implements CSVParsable{
    * List of available subscriptions 
    */
   protected ArrayList<Subscription> subscriptions = new ArrayList<>();
+
+  /**
+	 * Structure of Customer's column 
+	 */
+	private static String column_structure = "%-3s | %-32s | %-64s";
 
   public Customer(){
     this.id = 0;
@@ -112,10 +118,56 @@ public abstract class Customer implements CSVParsable{
 
   /**
    * Add a subscription to the customer's list of subscriptions
-   * @param subscription Subscription object to be added
+   * @param subscription subscription object to be added
    */
   public void setSubscriptions(Subscription subscription){
     subscriptions.add(subscription);
+  }
+
+  /**
+   * Remove specific subscription from the paying customer
+   * @param paid_by the paying customer ID
+   * @param sub_id the subscription ID
+   */
+  public void removeSubscription(int paid_by, int sub_id){
+    for(int i = 0; i < subscriptions.size(); i++){
+      Subscription sub = subscriptions.get(i);
+
+      if(sub.getPaidBy() == paid_by && sub.getId() == sub_id){
+        subscriptions.remove(sub);
+        break;
+      }
+    }
+  }
+
+  /**
+	 * Display data in a structured format
+	 */
+	public void display(){
+		IO.println(String.format(column_structure, id, name, email));
+	}
+
+	/**
+	 * Display table column header 
+	 */
+	public static void column(){
+		IO.println(String.format(column_structure, "ID", "Name", "Email"));
+	}
+
+  /**
+   * Find customer by ID from an array list
+   * @param custs An array list of customers
+   * @param id ID to search for
+   * @return the customer data if ID exists, otherwise null
+   */
+  public static Customer getCustomerById(ArrayList<Customer> custs, int id){
+    for(int i = 0; i < custs.size(); i++){
+      Customer cust = custs.get(i);
+
+      if(cust.getId() == id) return cust;
+    }
+
+    return null;
   }
 
   @Override

@@ -1,7 +1,7 @@
 package com.ict373.assignment1.customers;
 
 import com.ict373.assignment1.magazines.Subscription;
-import com.ict373.assignment1.payment.Transaction;
+import com.ict373.assignment1.payment.Charge;
 import com.ict373.assignment1.payment.methods.Method;
 import com.ict373.assignment1.utils.CSVParser;
 
@@ -50,10 +50,10 @@ public class PayingCustomer extends Customer{
 	 * Pay subscription for an associate.
 	 * @param customer an associate customer
 	 * @param subscription the subscription to pay for the associate
-	 * @return a new Transaction object representing the payment
+	 * @return a new Charge object representing the payment
 	 * @throws IllegalArgumentException if the associate does not have the magazine for the subscription
 	 */
-	public Transaction paySubscription(AssociateCustomer customer, Subscription subscription){
+	public Charge paySubscription(Customer customer, Subscription subscription){
 		if(subscription.isSupplement() && !customer.hasMagazine(subscription.getMagazineId())){
 			throw new IllegalArgumentException("Associate does not have the magazine for this subscription.");
 		}
@@ -63,16 +63,16 @@ public class PayingCustomer extends Customer{
 			customer.setSubscriptions(subscription);
 		}
 
-		return new Transaction(id, customer.getId(), subscription.getId());
+		return new Charge(id, customer.getId(), subscription.getId());
 	}
 
 	/**
 	 * Pay subscription for self.
 	 * @param subscription the subscription to pay for self
-	 * @return a new Transaction object representing the payment
+	 * @return a new Charge object representing the payment
 	 * @throws IllegalArgumentException if the customer does not have the magazine for the subscription
 	 */
-	public Transaction paySubscription(Subscription subscription){
+	public Charge paySubscription(Subscription subscription){
 		if(subscription.isSupplement() && !hasMagazine(subscription.getMagazineId())){
 			throw new IllegalArgumentException("Customer does not have the magazine for this subscription.");
 		}
@@ -82,7 +82,7 @@ public class PayingCustomer extends Customer{
 			setSubscriptions(subscription);
 		}
 
-		return new Transaction(id, id, subscription.getId());
+		return new Charge(id, id, subscription.getId());
 	}
 
 	/**
@@ -104,7 +104,7 @@ public class PayingCustomer extends Customer{
 	@Override
 	public void parse(CSVParser parser){
 		super.parse(parser);
-		payment_method = Transaction.getPaymentMethod(parser.getInteger());
+		payment_method = Charge.getPaymentMethod(parser.getInteger());
 		payment_method.parse(parser);
 	}
 

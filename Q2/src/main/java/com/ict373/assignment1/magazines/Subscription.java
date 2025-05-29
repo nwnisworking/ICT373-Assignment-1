@@ -1,8 +1,10 @@
 package com.ict373.assignment1.magazines;
 
+import java.util.ArrayList;
 import java.util.OptionalInt;
 
 import com.ict373.assignment1.utils.CSVParser;
+import com.ict373.assignment1.utils.IO;
 import com.ict373.assignment1.utils.CSVParsable;
 
 /**
@@ -40,6 +42,11 @@ public abstract class Subscription implements Cloneable, CSVParsable{
 	 * The ID of the customer that paid for this subscription.
 	 */
 	protected int paid_by = 0;
+
+	/**
+	 * Structure of Subscription's column 
+	 */
+	private static String column_structure = "%-3s| %-12s | %-64s | %-5s";
 
 	/**
 	 * Default constructor for creating a subscription.
@@ -145,6 +152,36 @@ public abstract class Subscription implements Cloneable, CSVParsable{
 	public int getPaidBy(){
 		return paid_by;
 	}
+
+	/**
+	 * Display data in a structured format
+	 */
+	public void display(){
+		IO.println(String.format(column_structure, id, mag_id.orElse(0), name, cost));
+	}
+
+	/**
+	 * Display table column header 
+	 */
+	public static void column(){
+		IO.println(String.format(column_structure, "ID", "Magazine ID", "Name", "Cost"));
+	}
+
+	/**
+   * Find Subscription by ID from an array list
+   * @param subs An array list of subscriptions
+   * @param id ID to search for
+   * @return the subscription data if ID exists, otherwise null
+   */
+  public static Subscription getSubscriptionById(ArrayList<Subscription> subs, int id){
+    for(int i = 0; i < subs.size(); i++){
+      Subscription sub = subs.get(i);
+
+      if(sub.getId() == id) return sub;
+    }
+
+    return null;
+  }
 
 	@Override
 	public void parse(CSVParser parser){
