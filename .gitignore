@@ -1,0 +1,32 @@
+# Compiled class file
+*.class
+
+# Log file
+*.log
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# Bytecode folders
+/target/
+/build/
+/out/
+
+# Intellij Idea files
+.idea/
+*.iml
+
+# Eclipse files
+.settings/
+.project
+.classpath
+
+# NetBeans files
+nbproject/
+
+# Maven files
+/mvnw
+/mvnw.cmd
+
