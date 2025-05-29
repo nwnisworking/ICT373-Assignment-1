@@ -233,6 +233,27 @@ public class Page{
 			IO.println("Is paying customer: " + (searched_customer instanceof PayingCustomer ? "true" : "false"));
 			IO.println("");
 
+			if(searched_customer instanceof PayingCustomer){
+				PayingCustomer pc = (PayingCustomer) searched_customer;
+
+				IO.println("Payment Detail");
+
+				if(pc.getPaymentMethod() instanceof CreditCard){
+					CreditCard cc = (CreditCard) pc.getPaymentMethod();
+					IO.println("Card Type: Credit Card");
+					IO.println("Card Number: " + cc.getCardNumber());
+					IO.println("Card Expiry: " + cc.getExpiryDate());
+				}
+				else{
+					DirectDebit dd = (DirectDebit) pc.getPaymentMethod();
+					IO.println("Card Type: Direct Debit");
+					IO.println("Bank Name: " + dd.getBankName());
+					IO.println("Account Number: " + dd.getAccountNumber());
+				}
+
+				IO.println("");
+			}
+
 			Subscription.column();
 			
 			for(Subscription sub : searched_customer.getSubscriptions()){
