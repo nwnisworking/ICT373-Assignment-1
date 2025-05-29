@@ -41,6 +41,7 @@ public class IO{
 	 * @return a character from the input
 	 */
   public static char getChar(String msg, Optional<String> err_msg){
+    err_msg = err_msg == null ? Optional.empty() : err_msg;
     do{
       print(msg);
       String value = reader.nextLine();
@@ -61,6 +62,8 @@ public class IO{
 	 * @return a number
 	 */
   public static int getInt(String msg, Optional<String> err_msg){
+    err_msg = err_msg == null ? Optional.empty() : err_msg;
+
     do{
       print(msg);
       
@@ -88,6 +91,8 @@ public class IO{
 	 * @return a number
 	 */
   public static short getShort(String msg, Optional<String> err_msg){
+    err_msg = err_msg == null ? Optional.empty() : err_msg;
+
     do{
       print(msg);
       
@@ -116,6 +121,8 @@ public class IO{
    * @return a boolean value 
    */
   public static boolean getBoolean(String msg, Optional<String> err_msg){
+    err_msg = err_msg == null ? Optional.empty() : err_msg;
+
     do{
       print(msg);
       
@@ -148,6 +155,8 @@ public class IO{
    * @return a number 
    */
   public static long getLong(String msg, Optional<String> err_msg){
+    err_msg = err_msg == null ? Optional.empty() : err_msg;
+
     do{
       print(msg);
       
@@ -175,6 +184,8 @@ public class IO{
 	 * @return a 32-bit floating point number
 	 */
   public static float getFloat(String msg, Optional<String> err_msg){
+    err_msg = err_msg == null ? Optional.empty() : err_msg;
+
     do{
       print(msg);
       
@@ -202,6 +213,8 @@ public class IO{
 	 * @return a 64-bit floating point number
 	 */
   public static double getDouble(String msg, Optional<String> err_msg){
+    err_msg = err_msg == null ? Optional.empty() : err_msg;
+
     do{
       print(msg);
       
