@@ -117,7 +117,7 @@ public class Page{
 		continuePrompt();
 	}
 
-	public static void removeSubscription(ArrayList<Subscription> subs, ArrayList<Customer> custs){
+	public static void removeSubscription(ArrayList<Subscription> subs, ArrayList<Customer> custs, ArrayList<Charge> charges){
 		IO.println("REMOVE SUBCRIPTION");
 		IO.println("");
 
@@ -136,6 +136,8 @@ public class Page{
 			IO.println("");
 			boolean valid_id = false; // Checks whether anything is deleted.
 
+			ArrayList<Integer> deleted_subs = new ArrayList<>();
+
 			// It is important to remove all the supplement from a magazine.
 			// This means looping through subs to find all the affected supplements. 
 			// If the selected ID is a subscription, we can immediately break out of the loop.
@@ -145,19 +147,37 @@ public class Page{
 				if(sub.isMagazine() && sub.getId() == selected_id){
 					IO.println("Magazine " + sub.getName() + " deleted");
 					valid_id = true;
+					deleted_subs.add(sub.getId());
 					subs.remove(sub);
 					i--;
 				}
 				else if(sub.isSupplement() && sub.getMagazineId() == selected_id){
 					IO.println("Supplement " + sub.getName() + " is deleted");
+					deleted_subs.add(sub.getId());
 					subs.remove(sub);
+
 					i--;
 				}
 				else if(sub.isSupplement() && sub.getId() == selected_id){
 					valid_id = true;
 					IO.println("Supplement " + sub.getName() + " is deleted");
 					subs.remove(sub);
+					deleted_subs.add(sub.getId());
+
 					break;
+				}
+			}
+
+			// We also need to remove subscription from customer and charge list to avoid paying
+			// for non-existent subscription and ensure uniformity 
+			for(int i = 0; i < charges.size(); i++){
+				Charge charge = charges.get(i);
+
+				if(deleted_subs.contains(charge.getSubscriptionId())){
+					Customer cust = Customer.getCustomerById(custs, charge.getPaidFor());
+					cust.removeSubscription(charge.getPaidBy(), charge.getSubscriptionId());
+					charges.remove(charge);
+					i--;
 				}
 			}
 

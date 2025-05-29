@@ -13,7 +13,6 @@ import com.ict373.assignment1.utils.IO;
 
 // Assumptions
 // 1. User can own more than one magazine subscription.
-// 2. Transaction can contain customer id that does not exist (from deleted)
 
 public class Main{
 	private static final String SUBSCRIPTION_CSV = "csv/subscriptions.csv";
@@ -51,7 +50,7 @@ public class Main{
 				switch(choice){
 					case 1 -> Page.viewSubscriptions(subs);
 					case 2 -> Page.addSubscription(subs, custs);
-					case 3 -> Page.removeSubscription(subs, custs);
+					case 3 -> Page.removeSubscription(subs, custs, trans);
 					case 4 -> Page.viewCustomers(custs);
 					case 5 -> Page.addCustomer(custs);
 					case 6 -> Page.removeCustomer(custs, trans);
