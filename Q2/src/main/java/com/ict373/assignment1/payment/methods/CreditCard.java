@@ -1,7 +1,7 @@
 package com.ict373.assignment1.payment.methods;
 
 import com.ict373.assignment1.utils.CSVParser;
-import com.ict373.assignment1.payment.Transaction;
+import com.ict373.assignment1.payment.Charge;
 
 public class CreditCard implements Method{
 	/**
@@ -89,6 +89,6 @@ public class CreditCard implements Method{
 
 	@Override
 	public String toString() {
-		return Transaction.CREDIT_CARD + "," + customer_id + "," + card_number + "," + expiry_date;
+		return Charge.CREDIT_CARD + "," + customer_id + "," + card_number + "," + expiry_date;
 	}
 }

@@ -1,7 +1,7 @@
 package com.ict373.assignment1.payment.methods;
 
 import com.ict373.assignment1.utils.CSVParser;
-import com.ict373.assignment1.payment.Transaction;
+import com.ict373.assignment1.payment.Charge;
 
 public class DirectDebit implements Method{
 	/**
@@ -69,6 +69,6 @@ public class DirectDebit implements Method{
 
 	@Override
 	public String toString(){
-		return Transaction.DEBIT_CARD + ',' + customer_id + ',' + account_number + ',' + bank_name;
+		return Charge.DEBIT_CARD + "," + customer_id + "," + account_number + "," + bank_name;
 	}
 }
