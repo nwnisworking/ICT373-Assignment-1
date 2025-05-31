@@ -2,7 +2,8 @@ package com.ict373.assignment1;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Optional;
+import java.util.HashMap;
+import java.util.TreeMap;
 
 import com.ict373.assignment1.customers.*;
 import com.ict373.assignment1.magazines.*;
@@ -13,6 +14,7 @@ import com.ict373.assignment1.utils.IO;
 
 // Assumptions
 // 1. User can own more than one magazine subscription.
+// 2. We should store customer in transaction
 
 public class Main{
 	private static final String SUBSCRIPTION_CSV = "csv/subscriptions.csv";
@@ -23,23 +25,21 @@ public class Main{
 
 	private static boolean is_CSV = false;
 
-	private static ArrayList<Subscription> subs = new ArrayList<>();
+	private static TreeMap<Integer, Subscription> subs = new TreeMap<>();
 
-	private static ArrayList<Customer> custs = new ArrayList<>();
+	private static TreeMap<Integer, Customer> custs = new TreeMap<>();
 
-	private static ArrayList<Charge> trans = new ArrayList<>();
+	private static ArrayList<Charge> charges = new ArrayList<>();
 	public static void main(String[] args){
 		is_CSV = IO.getBoolean(
-			"Do you want to load sample data using CSV files? ", 
-			Optional.of("Only yes or no is accepted.")
-		);
+			"Do you want to load sample data using CSV files? ", null);
 
 		try{
 			initSubscription();
 			initCustomer();
-			initTransaction();
+			initCharge();
 
-			int choice = 9;
+			int choice = 10;
 
 			while(choice != 0){
 				Page.home();
@@ -50,102 +50,82 @@ public class Main{
 				switch(choice){
 					case 1 -> Page.viewSubscriptions(subs);
 					case 2 -> Page.addSubscription(subs, custs);
-					case 3 -> Page.removeSubscription(subs, custs, trans);
+					case 3 -> Page.removeSubscription(subs, custs, charges);
 					case 4 -> Page.viewCustomers(custs);
 					case 5 -> Page.addCustomer(custs);
-					case 6 -> Page.removeCustomer(custs, trans);
-					case 7 -> Page.viewCharges(trans);
-					case 8 -> Page.addCharge(trans, custs, subs);
-					case 9 -> choice = 0;
+					case 6 -> Page.removeCustomer(custs, charges);
+					case 7 -> Page.viewCharges(charges);
+					case 8 -> Page.addCharge(charges, custs, subs);
+					case 9 -> Page.removeCharge(charges, custs, subs);
+					case 10 -> choice = 0;
 				}
 			}
 		}
+		// This catches all the exceptions. Only IMPORTANT exceptions that disrupt the program flow should be caught. 
 		catch(Exception e){
 			System.out.println(e.getMessage());
 			return;
 		}
 	}
 
-	private static Subscription getSubscription(int id){
-		for(Subscription sub : subs){
-			if(sub.getId() == id){
-				return sub;
-			}
-		}
+	private static void initCharge() throws IOException, ClassCastException, CloneNotSupportedException, RuntimeException{
+		int line = 1;
 
-		throw new RuntimeException("Subscription with ID " + id + " not found.");
-	}
-
-	private static void initTransaction() throws IOException{
 		if(is_CSV){
 			try{
 				FileIO io = new FileIO(CHARGE_CSV);
 				CSVParser parser = new CSVParser(io.readAll());
 				
 				io.close();
-				
-				while(!parser.finished()){
-					Charge tran = new Charge();
 
-					tran.parse(parser);
-					trans.add(tran);
+				while(!parser.finished()){
+					Charge charge = new Charge(
+						(PayingCustomer) custs.get(parser.getInteger()),
+						custs.get(parser.getInteger()),
+						subs.get(parser.getInteger())
+					);
+
+					charges.add(charge);
+					line++;
 				}
 			}
 			catch(IOException e){
-				throw new IOException("Failed to read transactions from CSV file: " + e.getMessage());
+				throw new IOException("Failed to read charges from CSV: " + e.getMessage());
+			}
+			catch(ClassCastException e){
+				throw new ClassCastException("Customer is not a paying customer in line " + line);
 			}
 		}
-		else{
-			trans.addAll(Data.loadCharges());
-		}
 
-		for(Charge tran : trans){
-			Customer paid_by_customer = null;
-			Customer paid_for_customer = null;
+		try{
+			line = 1;
+			for(Charge charge : charges){
+				PayingCustomer paid_by = (PayingCustomer)charge.getPaidBy();
+				Customer paid_for =  charge.getPaidFor();
+				Subscription sub = charge.getSubscription().clone();
 
-			for(int i = 0; i < custs.size(); i++){
-				if(tran.getPaidBy() == custs.get(i).getId()){
-					paid_by_customer = custs.get(i);
+				charge.setSubscription(sub);
+
+				// If subscription is a supplement and it does not contain the required magazine
+				if(!sub.isMagazine() && !paid_for.hasMagazine(sub.getMagazineId())){
+					throw new RuntimeException("Associate customer does not have the magazine for this subscription in line " + line);
 				}
-				
-				if(tran.getPaidFor() == custs.get(i).getId()){
-					paid_for_customer = custs.get(i);
-				}
-				
-				if(paid_by_customer != null && paid_for_customer != null){
-					try{
-						Subscription sub = getSubscription(tran.getSubscriptionId()).clone();
 
-						if(paid_by_customer instanceof AssociateCustomer){
-							throw new RuntimeException("Associate customer cannot pay for a subscription.");
-						}
-
-						if(sub.isMagazine()){
-							sub.setPaidBy(paid_by_customer.getId());
-							sub.setPaidFor(paid_for_customer.getId());
-							paid_for_customer.setSubscriptions(sub);
-						}
-						else{
-							if(!paid_for_customer.hasMagazine(sub.getMagazineId())){
-								throw new RuntimeException("Associate customer does not have the magazine for this subscription.");
-							}
-							sub.setPaidBy(paid_by_customer.getId());
-							sub.setPaidFor(paid_for_customer.getId());
-							paid_for_customer.setSubscriptions(sub);
-						}
-
-					}
-					catch(CloneNotSupportedException e){
-						throw new RuntimeException("Failed to clone subscription: " + e.getMessage());
-					}
-
-					break;
-				}
+				sub.setPaidBy(paid_by.getId());
+				sub.setPaidFor(paid_for.getId());
+				paid_for.setSubscriptions(sub);
+				line++;
 			}
+		}
+		catch(CloneNotSupportedException e){
+			throw new CloneNotSupportedException("Unable to clone subscription.");
+		}
+		catch(ClassCastException e){
+			throw new ClassCastException("Customer is not a paying customer in line " + line);
 		}
 	}
 
-	private static void initCustomer() throws IOException{
+	private static void initCustomer() throws IOException, RuntimeException{
 		if(is_CSV){
 			try{
 				FileIO io = new FileIO(CUSTOMER_CSV);
@@ -164,19 +144,16 @@ public class Main{
 					}
 
 					customer.parse(parser);
-					custs.add(customer);
+					custs.put(customer.getId(), customer);
 				}
 			}
 			catch(IOException e){
-				throw new IOException("Failed to read customers from CSV file: " + e.getMessage());
+				throw new IOException("Failed to read customers from CSV: " + e.getMessage());
 			}
-		}
-		else{
-			custs.addAll(Data.loadCustomers());
 		}
 	}
 
-	private static void initSubscription() throws IOException{
+	private static void initSubscription() throws IOException, RuntimeException{
 		if(is_CSV){
 			try{
 				FileIO io = new FileIO(SUBSCRIPTION_CSV);
@@ -193,15 +170,12 @@ public class Main{
 					}
 
 					sub.parse(parser);
-					subs.add(sub);
+					subs.put(sub.getId(), sub);
 				}
 			}
 			catch(IOException e){
-				throw new IOException("Failed to read subscription from CSV file: " + e.getMessage());
+				throw new IOException("Failed to read subscription from CSV: " + e.getMessage());
 			}
-		}
-		else{
-			subs.addAll(Data.loadSubscription());
 		}
 	}
 }
