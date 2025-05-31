@@ -1,11 +1,19 @@
 package com.ict373.assignment1;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.TreeMap;
+import java.util.stream.Stream;
+
+// import java.util.ArrayList;
+// import java.util.HashMap;
+// import java.util.HashSet;
 
 import com.ict373.assignment1.customers.*;
 import com.ict373.assignment1.magazines.*;
-import com.ict373.assignment1.payment.methods.*;
 import com.ict373.assignment1.payment.Charge;
+import com.ict373.assignment1.payment.methods.*;
+// import com.ict373.assignment1.payment.Charge;
 import com.ict373.assignment1.utils.IO;
 
 public class Page{
@@ -26,11 +34,12 @@ public class Page{
 		IO.println("6. Remove Customer");
 		IO.println("7. View Charges");
 		IO.println("8. Add Charge");
-		IO.println("9. Exit");
+		IO.println("9. Remove Charge");
+		IO.println("10. Exit");
 		IO.println("");
 	}
 
-	public static void viewSubscriptions(ArrayList<Subscription> subs){
+	public static void viewSubscriptions(TreeMap<Integer,Subscription> subs){
 		IO.println("VIEW SUBCRIPTIONS");
 		IO.println("");
 
@@ -39,39 +48,36 @@ public class Page{
 
 		if(subs.isEmpty()){
 			IO.println("No subscriptions available.");
+			continuePrompt();
+			return;
 		}
-		else{
-			Subscription.column();
 
-			for(Subscription sub : subs){
-				if(sub.isMagazine()){
-					mag_count++;
-				} 
-				else{
-					sup_count++;
-				}
-	
-				sub.display();
+		for(Subscription sub : subs.values()){
+			if(sub.isMagazine()){
+				mag_count++;
+			} 
+			else{
+				sup_count++;
 			}
-
-			IO.println("");
-			IO.println("Total Subscriptions: " + subs.size());
-			IO.println("Total Magazines: " + mag_count);
-			IO.println("Total Supplements: " + sup_count);
 		}
+	
+		Subscription.display(subs, Subscription.class, true);
+		IO.println("");
+		IO.println("Total Subscriptions: " + subs.size());
+		IO.println("Total Magazines: " + mag_count);
+		IO.println("Total Supplements: " + sup_count);
 		
 		continuePrompt();
 	}
 
-	public static void addSubscription(ArrayList<Subscription> subs, ArrayList<Customer> custs){
+	public static void addSubscription(TreeMap<Integer, Subscription> subs, TreeMap<Integer, Customer> custs){
 		IO.println("ADD SUBCRIPTIONS");
 		IO.println("");
 
 		boolean is_magazine = IO.getBoolean("Is this a magazine subscription? (1 for Yes, 0 for No): ", null);
-		// Always get the last ID and increment by 1, otherwise, using subs.size() might lead to duplicate ID
-		int id = subs.size() == 0 ? 1 : subs.getLast().getId() + 1; 
+		int id = subs.lastKey() + 1;
 		Subscription new_sub = null;
-
+		
 		if(is_magazine){
 			new_sub = new Magazine(
 				id,
@@ -80,159 +86,150 @@ public class Page{
 			);
 		}
 		else{
-			int mag_id = IO.getInt("Enter magazine ID for this supplement: ", null);
+			Subscription.display(subs, Magazine.class, true);
+			IO.println("");
 
-			// Magazine can only start with > 0.
-			if(mag_id <= 0){
-				IO.println("");
-				IO.println("Invalid magazine ID. Supplement cannot be added.");
+			int mag_id = IO.getInt("Enter magazine ID for this supplement: ", null);
+			Subscription mag = subs.get(mag_id);
+
+			if(mag == null){
+				IO.println("Magazine cannot be found.");
 				continuePrompt();
 				return;
 			}
-
-			Subscription search_mag = Subscription.getSubscriptionById(subs, mag_id);
-
-			if(search_mag == null){
-				IO.println("");
-				IO.println("No magazine with ID " + mag_id + " found. Supplement cannot be added.");
-			}
-			else if(search_mag.isSupplement()){
-				IO.println("");
-				IO.println("ID is a supplement, not a magazine. Supplement cannot be added.");
+			else if(mag.isSupplement()){
+				IO.println("Subscription + " + mag_id + " + is a supplement, not a magazine.");
+				continuePrompt();
+				return;
 			}
 			else{
 				new_sub = new Supplement(
-					subs.size() == 0 ? 1 : subs.getLast().getId() + 1, 
-					mag_id, 
+					id,
+					mag_id,
 					IO.getString("Enter supplement name: "), 
 					IO.getDouble("Enter supplement cost: ", null)
 				);
 			}
 		}
 
-		subs.add(new_sub);
+		subs.put(id, new_sub);
 
 		IO.println("");
-		IO.println((new_sub.isMagazine() ? "Magazine " : "Supplement ") + new_sub.getName() + " added successfully.");
+		IO.println((is_magazine ? "Magazine " : "Supplement ") + new_sub.getName() + " added successfully.");
+		
 		continuePrompt();
 	}
 
-	public static void removeSubscription(ArrayList<Subscription> subs, ArrayList<Customer> custs, ArrayList<Charge> charges){
+	public static void removeSubscription(TreeMap<Integer, Subscription> subs, TreeMap<Integer, Customer> custs, ArrayList<Charge> charges){
 		IO.println("REMOVE SUBCRIPTION");
 		IO.println("");
 
 		if(subs.isEmpty()){
 			IO.println("No subscriptions available.");
+			continuePrompt();
+			return;
+		}
+
+		Subscription.display(subs, Subscription.class, true);
+
+		IO.println("");
+
+		int deleted_sub_id = IO.getInt("Select subscription ID to remove: ", null);
+		Subscription deleted_sub = subs.get(deleted_sub_id);
+		IO.println("");
+
+		if(deleted_sub == null){
+			IO.println("Unable to delete invalid Subscription.");
+			continuePrompt();
+			return;
+		}
+
+		// Stores magazine (along with its supplements) or just supplement.  
+		ArrayList<Integer> deleted_subs = new ArrayList<>();
+
+		// Since subscription is magazine, any supplements related to this magazine should be removed.
+		if(deleted_sub.isMagazine()){
+			Iterator<Subscription> iterator = subs.values().iterator();
+
+			while(iterator.hasNext()){
+				Subscription sub = iterator.next();
+
+				if(sub.isSupplement() && sub.getMagazineId() == deleted_sub_id || sub.isMagazine() && sub.getId() == deleted_sub_id){
+					IO.println((sub.isMagazine() ? "Magazine" : "Supplement") + " " + sub.getName() + " removed from subscription");
+					deleted_subs.add(sub.getId());
+					iterator.remove();
+				}
+			}
 		}
 		else{
-			Subscription.column();
-			
-			for(Subscription sub : subs){
-				sub.display();
-			}
+			IO.println("Supplement " + deleted_sub.getName() + " removed from subscription");
 
-			IO.println("");
-			int selected_id = IO.getInt("Select subscription ID to remove: ", null);
-			IO.println("");
-			boolean valid_id = false; // Checks whether anything is deleted.
+			deleted_subs.add(deleted_sub_id);
+			subs.remove(deleted_sub_id);
+		}
 
-			ArrayList<Integer> deleted_subs = new ArrayList<>();
+		// Customer subscription should also be updated to reflect the change. This can be done using charges.
+		for(int i = 0; i < charges.size(); i++){
+			Charge charge = charges.get(i);
 
-			// It is important to remove all the supplement from a magazine.
-			// This means looping through subs to find all the affected supplements. 
-			// If the selected ID is a subscription, we can immediately break out of the loop.
-			for(int i = 0; i < subs.size(); i++){
-				Subscription sub = subs.get(i);
-
-				if(sub.isMagazine() && sub.getId() == selected_id){
-					IO.println("Magazine " + sub.getName() + " deleted");
-					valid_id = true;
-					deleted_subs.add(sub.getId());
-					subs.remove(sub);
-					i--;
-				}
-				else if(sub.isSupplement() && sub.getMagazineId() == selected_id){
-					IO.println("Supplement " + sub.getName() + " is deleted");
-					deleted_subs.add(sub.getId());
-					subs.remove(sub);
-
-					i--;
-				}
-				else if(sub.isSupplement() && sub.getId() == selected_id){
-					valid_id = true;
-					IO.println("Supplement " + sub.getName() + " is deleted");
-					subs.remove(sub);
-					deleted_subs.add(sub.getId());
-
-					break;
-				}
-			}
-
-			// We also need to remove subscription from customer and charge list to avoid paying
-			// for non-existent subscription and ensure uniformity 
-			for(int i = 0; i < charges.size(); i++){
-				Charge charge = charges.get(i);
-
-				if(deleted_subs.contains(charge.getSubscriptionId())){
-					Customer cust = Customer.getCustomerById(custs, charge.getPaidFor());
-					cust.removeSubscription(charge.getPaidBy(), charge.getSubscriptionId());
-					charges.remove(charge);
-					i--;
-				}
-			}
-
-			if(!valid_id){
-				IO.println("Subscription ID " + selected_id + " does not exist");
+			// The subscription matches the one from deleted subscription list.
+			if(deleted_subs.contains(charge.getSubscription().getId())){
+				IO.println("An inactive subscription has been removed from " + charge.getPaidFor().getName());
+				charge.getPaidFor().removeSubscription(charge.getSubscription());
+				charges.remove(charge);
+				i--;
 			}
 		}
-		
-		continuePrompt();	
+
+		continuePrompt();
 	}
 
-	public static void viewCustomers(ArrayList<Customer> custs){
+	public static void viewCustomers(TreeMap<Integer, Customer> custs){
 		IO.println("VIEW CUSTOMERS");
 		IO.println("");
 
 		if(custs.isEmpty()){
 			IO.println("No customer available.");
+			continuePrompt();
+			return;
 		}
-		else{
-			int assoc_count = 0;
-			int pay_count = 0;
 
-			Customer.column();
+		int assoc_count = 0;
+		int pay_count = 0;
 
-			for(Customer cust : custs){
-				if(cust instanceof PayingCustomer){
-					pay_count++;
-				}
-				else{
-					assoc_count++;
-				}
-
-				cust.display();
+		for(Customer cust : custs.values()){
+			if(cust instanceof PayingCustomer){
+				pay_count++;
 			}
-
-			IO.println("");
-			IO.println("Total Customer: " + (assoc_count + pay_count));
-			IO.println("Total Associate Customer: " + assoc_count);
-			IO.println("Total Paying Customer: " + pay_count);
+			else{
+				assoc_count++;
+			}
 		}
 
-		int id = IO.getInt("Search for a customer ID to view subscriptions: ", null);
-		Customer searched_customer = Customer.getCustomerById(custs, id);
+		Customer.display(custs, Customer.class, true);
+
+		IO.println("");
+		IO.println("Total Customer: " + (assoc_count + pay_count));
+		IO.println("Total Associate Customer: " + assoc_count);
+		IO.println("Total Paying Customer: " + pay_count);
+		IO.println("");
+
+		// Ask to find a specific customer to view more info (payment method, subscriptions)
+		int cust_id = IO.getInt("Search for a customer ID to view subscriptions: ", null);
+		IO.println("");
+		Customer searched_customer = custs.get(cust_id);
 
 		if(searched_customer == null){
 			IO.println("The customer you searched for does not exist");
 		}
 		else{
-			IO.println("");
 			IO.println("Customer ID#" + searched_customer.getId());
 			IO.println("Name: " + searched_customer.getName());
 			IO.println("Email: " + searched_customer.getEmail());
 			IO.println("Is paying customer: " + (searched_customer instanceof PayingCustomer ? "true" : "false"));
 			IO.println("");
 
+			// Applicable for paying customer only
 			if(searched_customer instanceof PayingCustomer){
 				PayingCustomer pc = (PayingCustomer) searched_customer;
 
@@ -254,22 +251,18 @@ public class Page{
 				IO.println("");
 			}
 
-			Subscription.column();
-			
-			for(Subscription sub : searched_customer.getSubscriptions()){
-				sub.display();	
-			}
+			Subscription.display(searched_customer.getSubscriptions(), Subscription.class, true);
 		}
-	
+
 		continuePrompt();
 	}
 
-	public static void addCustomer(ArrayList<Customer> custs){
+	public static void addCustomer(TreeMap<Integer, Customer> custs){
 		IO.println("ADD CUSTOMER");
 		IO.println("");
 
 		boolean is_paying = IO.getBoolean("Is this a paying customer? (1 for Yes, 0 for No): ", null);
-		int id = custs.size() == 0 ? 1 : custs.getLast().getId() + 1;
+		int id = custs.lastKey() + 1;
 		Customer new_cust;
 
 		if(!is_paying){
@@ -312,55 +305,110 @@ public class Page{
 			((PayingCustomer) new_cust).setPaymentMethod(method);
 		}
 
-		custs.add(new_cust);
+		custs.put(id, new_cust);
 
 		IO.println("");
 		IO.println((new_cust instanceof PayingCustomer ? "Paying" : "Associate") + " customer " + new_cust.getName() + " created");
 		continuePrompt();
 	}
 
-	public static void removeCustomer(ArrayList<Customer> custs, ArrayList<Charge> charges){
+	public static void removeCustomer(TreeMap<Integer, Customer> custs, ArrayList<Charge> charges){
 		IO.println("REMOVE CUSTOMER");
 		IO.println("");
 
 		if(custs.isEmpty()){
 			IO.println("No customers available.");
+			continuePrompt();
+			return;
 		}
-		else{
-			Customer.column();
-			
-			for(Customer cust : custs){
-				cust.display();
-			}
 
-			IO.println("");
-			int selected_id = IO.getInt("Select customer ID to remove: ", null);
-			IO.println("");
+		Customer.display(custs, Customer.class, true);
 
-			Customer cust_to_delete = Customer.getCustomerById(custs, selected_id);
+		IO.println("");
+		int deleted_cust_id = IO.getInt("Select customer ID to remove: ", null);
+		Customer deleted_cust = custs.get(deleted_cust_id);
+		IO.println("");
 
-			if(cust_to_delete == null){
-				IO.println("Customer with ID " + selected_id + " cannot be found.");
-			}
-			else{
-				// Charges must be cleared along with Associate customer
-				// subscription data.
-				for(int i = 0; i < charges.size(); i++){
-					Charge charge = charges.get(i);
+		if(deleted_cust == null){
+			IO.println("Customer with ID " + deleted_cust_id + " cannot be found.");
+			continuePrompt();
+			return;
+		}
 
-					if(charge.getPaidBy() == cust_to_delete.getId()){
-						Customer assoc = Customer.getCustomerById(custs, charge.getPaidFor());
-						assoc.removeSubscription(charge.getPaidBy(), charge.getSubscriptionId());
-						charges.remove(charge);
-						i--;
-					}
+		for(int i = 0; i < charges.size(); i++){
+			Charge charge = charges.get(i);
+			Customer paid_by = charge.getPaidBy();
+			Customer paid_for = charge.getPaidFor();
+			Subscription sub = charge.getSubscription();
+
+			if(paid_by.equals(deleted_cust) || paid_for.equals(deleted_cust)){
+				// Delete subscription from paid for.
+				if(paid_by.equals(deleted_cust)){
+					paid_for.removeSubscription(sub);
+					IO.println("The subscription " + sub.getName() +  " bought by " + paid_by.getName() + " for " + paid_for.getName() + " is cancelled");
 				}
 
-				IO.println("Customer " + cust_to_delete.getName() + " deleted successfully.");
-				custs.remove(cust_to_delete);
+
+				charges.remove(charge);
+				i--;
 			}
 		}
+
+		// Remove supplements that does not have magazine any more.
+		for(int i = 0; i < charges.size(); i++){
+			Charge charge = charges.get(i);
+			Customer paid_by = charge.getPaidBy();
+			Customer paid_for = charge.getPaidFor();
+			Subscription sub = charge.getSubscription();
+
+			if(sub.isSupplement() && paid_for.hasMagazine(sub.getMagazineId()) || sub.isMagazine()){
+				continue;
+			}
+
+			IO.println("The subscription bought by " + paid_by.getName() + " for " + paid_for.getName() + " is cancelled as the supplement " + sub.getName() + " is missing magazine subscription");
+
+			paid_for.removeSubscription(sub);
+			charges.remove(charge);
+			i--;
+		}
 		
+		// for(int i = 0; i < charges.size(); i++){
+		// 	Charge charge = charges.get(i);
+
+		// 	// It did not delete supplement that the magazine is already deleted for
+		// 	if(charge.getPaidBy().equals(deleted_cust) || charge.getPaidFor().equals(deleted_cust)){
+		// 		charge.getPaidFor().removeSubscription(charge.getSubscription());
+
+		// 		charges.remove(charge);
+		// 		i--;
+		// 	}
+		// }
+
+		// // Evaluate whether supplement is missing magazine. If so, delete the supplement too.
+		// for(int i = 0; i < charges.size(); i++){
+		// 	Charge charge = charges.get(i);
+		// 	Customer paid_for = charge.getPaidFor();
+		// 	Customer paid_by = charge.getPaidBy();
+		// 	boolean remove_charge = false;
+
+		// 	for(Subscription sub : paid_for.getSubscriptions()){
+		// 		if(sub.isMagazine() || paid_for.hasMagazine(sub.getMagazineId())) continue;
+
+		// 		paid_for.removeSubscription(paid_by.getId(), sub.getId());
+		// 		IO.println(paid_by.getName() + " unable to pay for " + paid_for.getName() + " subscription " + sub.getName());
+		// 		remove_charge = true;
+		// 		break;
+		// 	}
+
+		// 	if(remove_charge){
+		// 		charges.remove(charge);
+		// 		i--;
+		// 	}
+		// }
+
+		IO.println("Customer " + deleted_cust.getName() + " deleted successfully.");
+		custs.remove(deleted_cust_id);
+
 		continuePrompt();	
 	}
 
@@ -368,16 +416,23 @@ public class Page{
 		IO.println("VIEW CHARGES");
 		IO.println("");
 
-		Charge.column();
-
-		for(Charge charge : charges){
-			charge.display();
+		if(charges.isEmpty()){
+			IO.println("No charges available.");
+		}
+		else{
+			Charge.display(charges, Charge.class, true);
 		}
 
 		continuePrompt();
 	}
 
-	public static void addCharge(ArrayList<Charge> charges, ArrayList<Customer> custs, ArrayList<Subscription> subs) throws CloneNotSupportedException{
+	/**
+	 * @param charges
+	 * @param custs
+	 * @param subs
+	 * @throws CloneNotSupportedException
+	 */
+	public static void addCharge(ArrayList<Charge> charges, TreeMap<Integer, Customer> custs, TreeMap<Integer, Subscription> subs) throws CloneNotSupportedException{
 		IO.println("ADD CHARGE");
 		IO.println("");
 		IO.println("Paying Customer");
@@ -385,28 +440,22 @@ public class Page{
 
 		Customer paid_for;
 		Customer paid_by;
-		Subscription subscription;
+		Subscription sub;
 		Charge charge;
 
-		Customer.column();
-		for(Customer cust : custs){
-			if(cust instanceof PayingCustomer)
-				cust.display();
-		}
+		Customer.display(custs, PayingCustomer.class, true);
 		
 		IO.println("");
-		paid_by = Customer.getCustomerById(custs, IO.getInt("Select paying customer: ", null));
+		paid_by = custs.get(IO.getInt("Select paying customer: ", null));
 		IO.println("");
 
-		if(paid_by != null){
-			if(!(paid_by instanceof PayingCustomer)){
-				IO.println("The selected customer is not a paying customer. Charge cancelled.");
-				continuePrompt();
-				return;
-			}
+		if(paid_by == null){
+			IO.println("Paying customer does not exist.");
+			continuePrompt();
+			return;			
 		}
-		else{
-			IO.println("Customer does not exist. Charge cancelled.");
+		else if(paid_by instanceof AssociateCustomer){
+			IO.println("The selected customer is not a paying customer.");
 			continuePrompt();
 			return;
 		}
@@ -415,14 +464,11 @@ public class Page{
 		IO.println("All Customers");
 		IO.println("");
 
-		Customer.column();
-		for(Customer cust : custs){
-			cust.display();
-		}
+		Customer.display(custs, Customer.class, true);
 
 		IO.println("");
 		
-		paid_for = Customer.getCustomerById(custs, IO.getInt("Select customer: ", null));
+		paid_for = custs.get(IO.getInt("Select customer: ", null));
 
 		IO.println("");
 
@@ -435,45 +481,118 @@ public class Page{
 		IO.println("All Subscriptions");
 		IO.println("");
 
-		Subscription.column();
-		for(Subscription sub : subs){
-			sub.display();
-		}
+		Subscription.display(subs, Subscription.class, true);
 
 		IO.println("");
-		subscription = Subscription.getSubscriptionById(subs, IO.getInt("Select subscription: ", null));
+		sub = subs.get(IO.getInt("Select subscription: ", null));
 		IO.println("");
 		
-		if(subscription != null){
-			if(subscription.isSupplement() && !paid_for.hasMagazine(subscription.getMagazineId())){
-				IO.println("Customer did not owned the required magazine to purchase this supplement.");
-				continuePrompt();
-				return;
-			}
-
-			subscription = subscription.clone();
-
-			if(paid_by.equals(paid_for)){
-				charge = ((PayingCustomer)paid_by).paySubscription(subscription);
-			}
-			else{
-				charge = ((PayingCustomer)paid_by).paySubscription(paid_for, subscription);
-			}
-
-			if(paid_by.equals(paid_for)){
-				IO.println("Paying customer " + paid_by.getName() + " made a purchase for " + subscription.getName());
-			}
-			else{
-				IO.println("Paying customer " + paid_by.getName() + " purchased a subscription for " + paid_for.getName());
-			}
-			charges.add(charge);
+		if(sub == null){
+			IO.println("Subscription does not exist.");
 			continuePrompt();
 			return;
+		}
+		else if(sub.isSupplement() && !paid_for.hasMagazine(sub.getMagazineId())){
+			IO.println("Customer did not owned the require magazine to purchase this supplement.");
+			continuePrompt();
+			return;
+		}
+
+		sub = sub.clone();
+		charge = ((PayingCustomer) paid_by).paySubscription(paid_for, sub);
+
+		if(paid_by.equals(paid_for)){
+			IO.println("Paying customer " + paid_by.getName() + " made a purchase for " + sub.getName());
 		}
 		else{
-			IO.println("Subscription does not exist. Charge cancelled.");
+			IO.println("Paying customer " + paid_by.getName() + " purchased a subscription " + sub.getName() + " for " + paid_for.getName());
+		}
+
+		charges.add(charge);
+		continuePrompt();
+	}
+
+	public static void removeCharge(ArrayList<Charge> charges, TreeMap<Integer, Customer> custs, TreeMap<Integer, Subscription> subs){
+		Customer paid_for;
+		Charge charge = null;
+
+		Customer.column();
+
+		// Display all customer that have subscriptions
+		for(Customer cust : custs.values()){
+			if(cust.getSubscriptions().size() > 0)
+				Customer.display(cust);
+		}
+
+		IO.println("");
+
+		paid_for = custs.get(IO.getInt("Enter customer ID from the list: ", null));
+
+		IO.println("");
+
+		if(paid_for == null){
+			IO.println("Customer does not exist");
 			continuePrompt();
 			return;
 		}
+		else if(paid_for.getSubscriptions().size() == 0){
+			IO.println("Customer does not have an active subscription.");
+			continuePrompt();
+			return;
+		}
+
+		Subscription.display(paid_for.getSubscriptions(), Subscription.class, true);
+
+		IO.println("");
+
+		int sub_id = IO.getInt("Enter subscription ID: ", null);
+		int paid_by_id = IO.getInt("Enter paying customer ID: ", null);
+		boolean has_match = false;
+
+		for(int i = 0; i < charges.size(); i++){
+			charge = charges.get(i);
+
+			if(charge.getPaidBy().getId() == paid_by_id && charge.getPaidFor().getId() == paid_for.getId() && charge.getSubscription().getId() == sub_id){
+				has_match = true;
+				paid_for.removeSubscription(charge.getSubscription());
+				charges.remove(charge);
+				break;
+			}
+		}
+
+		if(has_match){
+			if(charge.getPaidBy().equals(charge.getPaidFor())){
+				IO.println(paid_for.getName() + " cancelled subscription for " + subs.get(sub_id).getName());
+			}
+			else{
+				IO.println(charge.getPaidBy().getName() + " has removed the subscription for " + charge.getSubscription().getName() + " from " + charge.getPaidFor().getName());
+			}
+
+			// If there is a duplicated magazine, this will be ignored. This also means the supplements will not be deleted.
+			// Otherwise, supplement should be deleted.
+			if(charge.getSubscription().isMagazine() && !paid_for.hasMagazine(charge.getSubscription().getId())){
+				for(int i = 0; i < charges.size(); i++){
+					Charge supp_charge = charges.get(i);
+					Subscription supp = supp_charge.getSubscription();
+
+					if(
+						supp_charge.getPaidFor().equals(paid_for) && // supplement charge must match paid_for object 
+						supp.isSupplement() && // supplement charge must be supllement
+						supp.getMagazineId() == charge.getSubscription().getId() // Supplement charge must match the magazine that is deleted
+					){
+
+						IO.println("Supplement " + supp.getName() + " has been automatically unsubscribed from " + charge.getPaidFor().getName());
+						paid_for.removeSubscription(supp);
+						charges.remove(supp_charge);
+						i--;
+					}
+				}
+			}
+		}
+		else{
+			IO.println("No charges were removed");
+		}
+
+		continuePrompt();
 	}
 }
