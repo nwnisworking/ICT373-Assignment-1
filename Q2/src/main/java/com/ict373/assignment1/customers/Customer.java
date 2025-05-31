@@ -3,9 +3,11 @@ package com.ict373.assignment1.customers;
 import com.ict373.assignment1.magazines.Subscription;
 import com.ict373.assignment1.utils.CSVParser;
 import com.ict373.assignment1.utils.IO;
+// import com.ict373.assignment1.utils.IO;
 import com.ict373.assignment1.utils.CSVParsable;
 
 import java.util.ArrayList;
+import java.util.TreeMap;
 
 /**
  * Represents a customer in the system.
@@ -94,6 +96,15 @@ public abstract class Customer implements CSVParsable{
     return email;
   }
 
+  public Subscription paidSubscription(int paid_by, int sub_id){
+    for(Subscription subscription : subscriptions){
+      if(subscription.getPaidBy() == paid_by && subscription.getId() == sub_id)
+      return subscription;
+    }
+
+    return null;
+  }
+
   /**
    * Check if the customer has a subscription to a magazine
    * @param id the ID of the magazine subscription
@@ -140,35 +151,35 @@ public abstract class Customer implements CSVParsable{
     }
   }
 
-  /**
-	 * Display data in a structured format
-	 */
-	public void display(){
-		IO.println(String.format(column_structure, id, name, email));
-	}
-
-	/**
-	 * Display table column header 
-	 */
-	public static void column(){
-		IO.println(String.format(column_structure, "ID", "Name", "Email"));
-	}
-
-  /**
-   * Find customer by ID from an array list
-   * @param custs An array list of customers
-   * @param id ID to search for
-   * @return the customer data if ID exists, otherwise null
-   */
-  public static Customer getCustomerById(ArrayList<Customer> custs, int id){
-    for(int i = 0; i < custs.size(); i++){
-      Customer cust = custs.get(i);
-
-      if(cust.getId() == id) return cust;
-    }
-
-    return null;
+  public void removeSubscription(Subscription sub){
+    subscriptions.remove(sub);
   }
+
+  public static void column(){
+    IO.println(String.format(column_structure, "ID", "Name", "Email"));
+  }
+
+  public static void display(Customer cust){
+    IO.println(String.format(column_structure, cust.id, cust.name, cust.email));
+  }
+  /**
+	 * Display a list of customer in column-row format.
+	 * @param <T> a generic type that indicates a Customer or its inherited class
+	 * @param subs a treemap of customer with its id as the key
+	 * @param cls a customer or its inherited class
+	 * @param show_column display column if true
+	 */
+	public static <T> void display(TreeMap<Integer, Customer> custs, Class<T> cls, boolean show_column){
+		if(show_column){
+      column();
+		}
+
+		for(Customer cust : custs.values()){
+			if(cls == null || cls.isInstance(cust)){
+				display(cust);
+			}
+		}
+	}
 
   @Override
   public void parse(CSVParser parser){

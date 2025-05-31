@@ -63,26 +63,7 @@ public class PayingCustomer extends Customer{
 			customer.setSubscriptions(subscription);
 		}
 
-		return new Charge(id, customer.getId(), subscription.getId());
-	}
-
-	/**
-	 * Pay subscription for self.
-	 * @param subscription the subscription to pay for self
-	 * @return a new Charge object representing the payment
-	 * @throws IllegalArgumentException if the customer does not have the magazine for the subscription
-	 */
-	public Charge paySubscription(Subscription subscription){
-		if(subscription.isSupplement() && !hasMagazine(subscription.getMagazineId())){
-			throw new IllegalArgumentException("Customer does not have the magazine for this subscription.");
-		}
-		else{
-			subscription.setPaidBy(id);
-			subscription.setPaidFor(id);
-			setSubscriptions(subscription);
-		}
-
-		return new Charge(id, id, subscription.getId());
+		return new Charge(this, customer, subscription);
 	}
 
 	/**
@@ -104,7 +85,7 @@ public class PayingCustomer extends Customer{
 	@Override
 	public void parse(CSVParser parser){
 		super.parse(parser);
-		payment_method = Charge.getPaymentMethod(parser.getInteger());
+		payment_method = Method.getPaymentMethod(parser.getInteger());
 		payment_method.parse(parser);
 	}
 
