@@ -1,207 +1,116 @@
 package com.ict373.assignment1;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Optional;
+import java.util.TreeMap;
 
-import com.ict373.assignment1.customers.*;
 import com.ict373.assignment1.magazines.*;
-import com.ict373.assignment1.payment.Charge;
-import com.ict373.assignment1.utils.CSVParser;
-import com.ict373.assignment1.utils.FileIO;
+import com.ict373.assignment1.payment.*;
+import com.ict373.assignment1.customers.*;
+
+import com.ict373.assignment1.utils.ANSI;
 import com.ict373.assignment1.utils.IO;
 
-// Assumptions
-// 1. User can own more than one magazine subscription.
-
 public class Main{
-	private static final String SUBSCRIPTION_CSV = "csv/subscriptions.csv";
+	/**
+	 * A collection of subscriptions mapped in their ID.
+	 */
+	private static TreeMap<Integer, Subscription> subscriptions = new TreeMap<>();
+	
+	/**
+	 * A collection of customer mapped in their ID.
+	 */
+	private static TreeMap<Integer, Customer> customers = new TreeMap<>();
 
-	private static final String CUSTOMER_CSV = "csv/customers.csv";
-
-	private static final String CHARGE_CSV = "csv/charges.csv";
-
-	private static boolean is_CSV = false;
-
-	private static ArrayList<Subscription> subs = new ArrayList<>();
-
-	private static ArrayList<Customer> custs = new ArrayList<>();
-
-	private static ArrayList<Charge> trans = new ArrayList<>();
 	public static void main(String[] args){
-		is_CSV = IO.getBoolean(
-			"Do you want to load sample data using CSV files? ", 
-			Optional.of("Only yes or no is accepted.")
-		);
-
 		try{
-			initSubscription();
-			initCustomer();
-			initTransaction();
+			init(); 
 
-			int choice = 9;
+			int options = -1;
 
-			while(choice != 0){
+			while(options != 0){
+				ANSI.clear();
+				ANSI.homePosition();
 				Page.home();
 
-				choice = IO.getInt("Pleae select your option: ", null);
+				options = IO.getInt("Select one of the following options: ", Optional.of("The option is in invalid format"));
+
 				IO.println("");
-				
-				switch(choice){
-					case 1 -> Page.viewSubscriptions(subs);
-					case 2 -> Page.addSubscription(subs, custs);
-					case 3 -> Page.removeSubscription(subs, custs, trans);
-					case 4 -> Page.viewCustomers(custs);
-					case 5 -> Page.addCustomer(custs);
-					case 6 -> Page.removeCustomer(custs, trans);
-					case 7 -> Page.viewCharges(trans);
-					case 8 -> Page.addCharge(trans, custs, subs);
-					case 9 -> choice = 0;
+
+				switch(options){
+					case 1 -> Page.weeklyEmail(customers);
+					case 2 -> Page.invoiceCustomer(customers);
+					case 3 -> Page.viewCustomers(customers);
+					case 4 -> Page.addCustomer(customers);
+					case 5 -> Page.deleteCustomer(customers);
+					case 6 -> Page.setPayer(customers);
+					case 7 -> Page.viewMagazineSupplement(subscriptions);
+					case 8 -> Page.addSubscription(subscriptions, customers);
+					case 9 -> Page.removeSubscription(subscriptions, customers);
+					case 10 -> options = 0;
+					default -> {
+						options = -1;
+						IO.println("Selection unavailable.");
+					}
 				}
 			}
 		}
-		catch(Exception e){
-			System.out.println(e.getMessage());
-			return;
+		catch(IOException | RuntimeException e){
+			IO.println(e.getMessage());
 		}
+
+		IO.println("Thank you for using Magazine subscription system!");
 	}
 
-	private static Subscription getSubscription(int id){
-		for(Subscription sub : subs){
-			if(sub.getId() == id){
-				return sub;
-			}
-		}
+	public static void init() throws IOException{
+		subscriptions.put(1, new Magazine(1, "MTV", 5.90));
+		subscriptions.put(2, new Supplement(2, "MTV Chinese", 3.5));
+		subscriptions.put(3, new Supplement(3, "MTV English", 3.5));
+		subscriptions.put(4, new Magazine(4, "Daily News", 2.50));
+		subscriptions.put(5, new Supplement(5, "Daily Sports", 2.80));
+		subscriptions.put(6, new Supplement(6, "Daily Finance", 3));
+		subscriptions.put(7, new Magazine(7, "Solo Magazine", 15.20));
+		
+		subscriptions.get(2).setMagazine((Magazine) subscriptions.get(1));
+		subscriptions.get(3).setMagazine((Magazine) subscriptions.get(1));
+		
+		subscriptions.get(5).setMagazine((Magazine) subscriptions.get(4));
+		subscriptions.get(6).setMagazine((Magazine) subscriptions.get(4));
 
-		throw new RuntimeException("Subscription with ID " + id + " not found.");
-	}
+		// Paying customer with empty data
+		customers.put(1, new PayingCustomer(1, "New Wei Nern", "nwnisworking@gmail.com"));
 
-	private static void initTransaction() throws IOException{
-		if(is_CSV){
-			try{
-				FileIO io = new FileIO(CHARGE_CSV);
-				CSVParser parser = new CSVParser(io.readAll());
-				
-				io.close();
-				
-				while(!parser.finished()){
-					Charge tran = new Charge();
+		// Paying customer with 2 associates and multiple subscriptions!
+		customers.put(2, new PayingCustomer(2, "John Leroy", "j_leroy@gmail.com"));
+		customers.put(3, new AssociateCustomer(3, "David Smith", "david_smith2342@yahoo.com"));
+		customers.put(7, new AssociateCustomer(7, "Alice Smith", "alicesmith@yahoo.com")); // This user has similar subscription!
 
-					tran.parse(parser);
-					trans.add(tran);
-				}
-			}
-			catch(IOException e){
-				throw new IOException("Failed to read transactions from CSV file: " + e.getMessage());
-			}
-		}
-		else{
-			trans.addAll(Data.loadCharges());
-		}
+		// Associate with subscriptions but no paying customer
+		// This can happen when the paying customer decides to remove itself
+		customers.put(4, new AssociateCustomer(4, "Adam West", "ada_wew@ty.com"));
+		
+		// Associate with a paying customer but no subscription
+		customers.put(5, new AssociateCustomer(5, "Dave Luka", "dave.luka@gmail.com"));
+		customers.put(6, new PayingCustomer(6, "Ashton", "ash.ton@gmail.com"));
 
-		for(Charge tran : trans){
-			Customer paid_by_customer = null;
-			Customer paid_for_customer = null;
+		((PayingCustomer) customers.get(1)).setPaymentMethod(new CreditCard("1234-1234-4321-4321", "05/29"));
+		((PayingCustomer) customers.get(6)).setPaymentMethod(new CreditCard("1234-6543-1235-8731", "02/27"));
+		((PayingCustomer) customers.get(2)).setPaymentMethod(new DirectDebit("1232-245-24123", "DBS"));
+		
+		((PayingCustomer) customers.get(2)).addAssociate((AssociateCustomer) customers.get(3));
+		((PayingCustomer) customers.get(2)).addAssociate((AssociateCustomer) customers.get(7));
+		((PayingCustomer) customers.get(6)).addAssociate((AssociateCustomer) customers.get(5));
+		
+		customers.get(2).addSubscriptions(subscriptions.get(1));
+		customers.get(2).addSubscriptions(subscriptions.get(2));
+		customers.get(2).addSubscriptions(subscriptions.get(3));
 
-			for(int i = 0; i < custs.size(); i++){
-				if(tran.getPaidBy() == custs.get(i).getId()){
-					paid_by_customer = custs.get(i);
-				}
-				
-				if(tran.getPaidFor() == custs.get(i).getId()){
-					paid_for_customer = custs.get(i);
-				}
-				
-				if(paid_by_customer != null && paid_for_customer != null){
-					try{
-						Subscription sub = getSubscription(tran.getSubscriptionId()).clone();
-
-						if(paid_by_customer instanceof AssociateCustomer){
-							throw new RuntimeException("Associate customer cannot pay for a subscription.");
-						}
-
-						if(sub.isMagazine()){
-							sub.setPaidBy(paid_by_customer.getId());
-							sub.setPaidFor(paid_for_customer.getId());
-							paid_for_customer.setSubscriptions(sub);
-						}
-						else{
-							if(!paid_for_customer.hasMagazine(sub.getMagazineId())){
-								throw new RuntimeException("Associate customer does not have the magazine for this subscription.");
-							}
-							sub.setPaidBy(paid_by_customer.getId());
-							sub.setPaidFor(paid_for_customer.getId());
-							paid_for_customer.setSubscriptions(sub);
-						}
-
-					}
-					catch(CloneNotSupportedException e){
-						throw new RuntimeException("Failed to clone subscription: " + e.getMessage());
-					}
-
-					break;
-				}
-			}
-		}
-	}
-
-	private static void initCustomer() throws IOException{
-		if(is_CSV){
-			try{
-				FileIO io = new FileIO(CUSTOMER_CSV);
-				CSVParser parser = new CSVParser(io.readAll());
-				
-				io.close();
-
-				while(!parser.finished()){
-					int type = parser.getInteger();
-					Customer customer;
-
-					switch(type){
-						case 0 -> customer = new AssociateCustomer();
-						case 1 -> customer = new PayingCustomer();
-						default -> throw new RuntimeException("Invalid customer type.");
-					}
-
-					customer.parse(parser);
-					custs.add(customer);
-				}
-			}
-			catch(IOException e){
-				throw new IOException("Failed to read customers from CSV file: " + e.getMessage());
-			}
-		}
-		else{
-			custs.addAll(Data.loadCustomers());
-		}
-	}
-
-	private static void initSubscription() throws IOException{
-		if(is_CSV){
-			try{
-				FileIO io = new FileIO(SUBSCRIPTION_CSV);
-				CSVParser parser = new CSVParser(io.readAll());
-				
-				while(!parser.finished()){
-					int type = parser.getInteger();
-					Subscription sub;
-
-					switch(type){
-						case 0 ->sub = new Supplement();
-						case 1 -> sub = new Magazine();
-						default -> throw new RuntimeException("Invalid Subscription type.");
-					}
-
-					sub.parse(parser);
-					subs.add(sub);
-				}
-			}
-			catch(IOException e){
-				throw new IOException("Failed to read subscription from CSV file: " + e.getMessage());
-			}
-		}
-		else{
-			subs.addAll(Data.loadSubscription());
-		}
+		customers.get(3).addSubscriptions(subscriptions.get(4));
+		customers.get(3).addSubscriptions(subscriptions.get(5));
+		
+		customers.get(7).addSubscriptions(subscriptions.get(1));
+		customers.get(7).addSubscriptions(subscriptions.get(1));
+		customers.get(7).addSubscriptions(subscriptions.get(2));
+		customers.get(7).addSubscriptions(subscriptions.get(3));
 	}
 }

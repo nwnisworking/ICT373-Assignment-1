@@ -4,14 +4,8 @@ import java.util.InputMismatchException;
 import java.util.Optional;
 import java.util.Scanner;
 
-/**
- * IO Utility Class
- * 
+/** 
  * Provides methods for reading input from the console and printing output.
- * 
- * @author nwnisworking
- * @version 1.0.0 Initial release
- * @date 2025-5-24
  */
 public class IO{
 	/**
@@ -252,7 +246,14 @@ public class IO{
    * @param data message to display
    */
   public static <V> void println(V data){
+    
     System.out.println(data);
+  }
+
+  public static void printText(String ...data){
+    for(String text : data){
+      println(text);
+    }
   }
   
   /**

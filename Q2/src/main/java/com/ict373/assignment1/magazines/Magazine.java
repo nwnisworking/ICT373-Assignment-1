@@ -19,11 +19,6 @@ public class Magazine extends Subscription{
 	 * @param cost Cost of the magazine
 	 */
 	public Magazine(int id, String name, double cost) {
-		super(id, 0, name, cost);
-	}
-
-	@Override
-	public String toString() {
-		return 1 + "," + super.toString();
+		super(id, name, cost, null);
 	}
 }

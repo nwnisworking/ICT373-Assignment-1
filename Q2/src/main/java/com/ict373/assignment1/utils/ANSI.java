@@ -1,0 +1,22 @@
+package com.ict373.assignment1.utils;
+
+/**
+ * Handles ANSI related commands. The list of ANSI escape sequences can be found below.
+ * 
+ * @see https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797
+ */
+public class ANSI{
+  /**
+   * Clears the entire screen 
+   */
+  public static void clear(){
+    IO.print("\033[2J");
+  }
+
+  /**
+   * Sets the cursor position back to 0, 0
+   */
+  public static void homePosition(){
+    IO.print("\033[H");
+  }
+}

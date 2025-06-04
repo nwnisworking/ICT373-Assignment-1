@@ -1,10 +1,8 @@
 package com.ict373.assignment1.customers;
 
-import com.ict373.assignment1.magazines.Subscription;
-import com.ict373.assignment1.payment.Charge;
-import com.ict373.assignment1.payment.methods.Method;
-import com.ict373.assignment1.utils.CSVParser;
+import java.util.ArrayList;
 
+import com.ict373.assignment1.payment.Method;
 /**
  * Represents a paying customer in the system.
  * A paying customer is a type of customer that can pay subscriptions for themselves or for associate customers.
@@ -14,80 +12,85 @@ public class PayingCustomer extends Customer{
   /**
    * Customer's default payment method. It can be a credit card, debit card, etc.
    */
-  protected Method payment_method;
+  private Method payment_method;
 
 	/**
-	 * Default constructor for PayingCustomer class.
-	 * Initializes the customer with default values.
+	 * List of associates that is tied to the paying customer
+	 */
+	private ArrayList<AssociateCustomer> associates = new ArrayList<>();
+
+	/** Initializes the customer with default values.
 	 */
 	public PayingCustomer() {
 		super();
 	}
 
 	/**
-	 * Constructor for PayingCustomer class.
-	 * @param id Unique identifier for the customer
-	 * @param name Name of the customer
-	 * @param email Email address of the customer
+	 * Constructor for PayingCustomer class without payment method.
+	 * @param id Unique identifier for the customer.
+	 * @param name Name of the customer.
+	 * @param email Email address of the customer.
 	 */
-	public PayingCustomer(int id, String name, String email) {
+	public PayingCustomer(int id, String name, String email){
 		super(id, name, email);
 	}
 
 	/**
 	 * Constructor for PayingCustomer class with payment method.
-	 * @param id Unique identifier for the customer
-	 * @param name Name of the customer
-	 * @param email Email address of the customer
-	 * @param payment_method The payment method used by the customer
+	 * @param id Unique identifier for the customer.
+	 * @param name Name of the customer.
+	 * @param email Email address of the customer.
+	 * @param payment_method Payment method which the customer is using.
 	 */
-	public PayingCustomer(int id, String name, String email, Method payment_method){
+	public PayingCustomer(int id, String name, String email, Method payment_Method){
 		super(id, name, email);
-		this.payment_method = payment_method;
+		this.payment_method = payment_Method;
 	}
 
 	/**
-	 * Pay subscription for an associate.
-	 * @param customer an associate customer
-	 * @param subscription the subscription to pay for the associate
-	 * @return a new Charge object representing the payment
-	 * @throws IllegalArgumentException if the associate does not have the magazine for the subscription
+	 * Add associate to the paying customer.
+	 * @param customer An associate customer.
+	 * @return True if associate does not have a payer, otherwise false.
 	 */
-	public Charge paySubscription(Customer customer, Subscription subscription){
-		if(subscription.isSupplement() && !customer.hasMagazine(subscription.getMagazineId())){
-			throw new IllegalArgumentException("Associate does not have the magazine for this subscription.");
-		}
-		else{
-			subscription.setPaidBy(id);
-			subscription.setPaidFor(customer.getId());
-			customer.setSubscriptions(subscription);
-		}
+	public boolean addAssociate(AssociateCustomer customer){
+		if(customer.getPayer() != null) 
+			return false;
 
-		return new Charge(id, customer.getId(), subscription.getId());
+		customer.setPayer(this);
+		associates.add(customer);
+
+		return true;
 	}
 
 	/**
-	 * Pay subscription for self.
-	 * @param subscription the subscription to pay for self
-	 * @return a new Charge object representing the payment
-	 * @throws IllegalArgumentException if the customer does not have the magazine for the subscription
+	 * Remove customer from the list of associates.
+	 * @param customer An associate customer.
+	 * @return True if associate customer exists in the associate list, otherwise false.
 	 */
-	public Charge paySubscription(Subscription subscription){
-		if(subscription.isSupplement() && !hasMagazine(subscription.getMagazineId())){
-			throw new IllegalArgumentException("Customer does not have the magazine for this subscription.");
-		}
-		else{
-			subscription.setPaidBy(id);
-			subscription.setPaidFor(id);
-			setSubscriptions(subscription);
-		}
+	public boolean removeAssociate(AssociateCustomer customer){
+		if(!associates.contains(customer))
+			return false;
 
-		return new Charge(id, id, subscription.getId());
+		associates.remove(customer);
+		customer.setPayer(null);
+
+		return true;
 	}
 
 	/**
-   * Set the payment method used by the customer
-   * @param payment_method payment method to be set for the customer
+	 * Remove all the associates. 
+	 */
+	public void removeAssociate(){
+		for(AssociateCustomer cust : associates){
+			cust.setPayer(null);
+		}
+		
+		associates.removeAll(associates);
+	}
+
+	/**
+   * Set the payment method used by the paying customer
+   * @param payment_method Payment method to be set for the customer
    */
   public void setPaymentMethod(Method payment_method){
     this.payment_method = payment_method;
@@ -95,21 +98,38 @@ public class PayingCustomer extends Customer{
 
 	/**
    * Get the payment method used by the customer
-   * @return payment method used by the customer
+   * @return Payment method used by the customer
    */
   public Method getPaymentMethod(){
     return payment_method;
   }
 
-	@Override
-	public void parse(CSVParser parser){
-		super.parse(parser);
-		payment_method = Charge.getPaymentMethod(parser.getInteger());
-		payment_method.parse(parser);
+	/**
+	 * Get the associates as an array list.
+	 * @return An array list of associate customers.
+	 */
+	public ArrayList<AssociateCustomer> getAssociates(){
+		return associates;
 	}
 
 	@Override
-	public String toString() {
-		return 1 + "," + super.toString() + "," + payment_method;
+	/**
+	 * Get the total cost of the subscription inclusive of the associates' subscriptions.
+	 */
+	public double getTotalCost(){
+		double total = super.getTotalCost();
+
+		for(AssociateCustomer associate : associates)
+			total+= associate.getTotalCost();
+
+		return total;
+	}
+
+	/**
+	 * Get the size of the associates
+	 * @return Size of the associates
+	 */
+	public int getAssociateSize(){
+		return associates.size();
 	}
 }

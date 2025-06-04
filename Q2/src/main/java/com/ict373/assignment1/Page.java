@@ -1,479 +1,609 @@
 package com.ict373.assignment1;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.TreeMap;
 
 import com.ict373.assignment1.customers.*;
-import com.ict373.assignment1.magazines.*;
-import com.ict373.assignment1.payment.methods.*;
-import com.ict373.assignment1.payment.Charge;
+import com.ict373.assignment1.payment.*;
+import com.ict373.assignment1.magazines.Subscription;
+import com.ict373.assignment1.utils.ANSI;
 import com.ict373.assignment1.utils.IO;
 
+import java.util.function.Consumer;
+
 public class Page{
-	private static void continuePrompt(){
-		IO.println("");
-		IO.getString("Press enter to continue...");
-		IO.println("");
-	}
-
-	public static void home(){
-		IO.println("Welcome to the Magazine Subscription System!");
-		IO.println("");
-		IO.println("1. View Subscriptions");
-		IO.println("2. Add Subscription");
-		IO.println("3. Remove Subscription");
-		IO.println("4. View Customers");
-		IO.println("5. Add Customer");
-		IO.println("6. Remove Customer");
-		IO.println("7. View Charges");
-		IO.println("8. Add Charge");
-		IO.println("9. Exit");
-		IO.println("");
-	}
-
-	public static void viewSubscriptions(ArrayList<Subscription> subs){
-		IO.println("VIEW SUBCRIPTIONS");
-		IO.println("");
-
-		int mag_count = 0;
-		int sup_count = 0;
-
-		if(subs.isEmpty()){
-			IO.println("No subscriptions available.");
-		}
-		else{
-			Subscription.column();
-
-			for(Subscription sub : subs){
-				if(sub.isMagazine()){
-					mag_count++;
-				} 
-				else{
-					sup_count++;
-				}
-	
-				sub.display();
-			}
-
-			IO.println("");
-			IO.println("Total Subscriptions: " + subs.size());
-			IO.println("Total Magazines: " + mag_count);
-			IO.println("Total Supplements: " + sup_count);
-		}
-		
-		continuePrompt();
-	}
-
-	public static void addSubscription(ArrayList<Subscription> subs, ArrayList<Customer> custs){
-		IO.println("ADD SUBCRIPTIONS");
-		IO.println("");
-
-		boolean is_magazine = IO.getBoolean("Is this a magazine subscription? (1 for Yes, 0 for No): ", null);
-		// Always get the last ID and increment by 1, otherwise, using subs.size() might lead to duplicate ID
-		int id = subs.size() == 0 ? 1 : subs.getLast().getId() + 1; 
-		Subscription new_sub = null;
-
-		if(is_magazine){
-			new_sub = new Magazine(
-				id,
-				IO.getString("Enter magazine name: "), 
-				IO.getDouble("Enter magazine cost: ", null)
-			);
-		}
-		else{
-			int mag_id = IO.getInt("Enter magazine ID for this supplement: ", null);
-
-			// Magazine can only start with > 0.
-			if(mag_id <= 0){
-				IO.println("");
-				IO.println("Invalid magazine ID. Supplement cannot be added.");
-				continuePrompt();
-				return;
-			}
-
-			Subscription search_mag = Subscription.getSubscriptionById(subs, mag_id);
-
-			if(search_mag == null){
-				IO.println("");
-				IO.println("No magazine with ID " + mag_id + " found. Supplement cannot be added.");
-			}
-			else if(search_mag.isSupplement()){
-				IO.println("");
-				IO.println("ID is a supplement, not a magazine. Supplement cannot be added.");
-			}
-			else{
-				new_sub = new Supplement(
-					subs.size() == 0 ? 1 : subs.getLast().getId() + 1, 
-					mag_id, 
-					IO.getString("Enter supplement name: "), 
-					IO.getDouble("Enter supplement cost: ", null)
-				);
-			}
-		}
-
-		subs.add(new_sub);
-
-		IO.println("");
-		IO.println((new_sub.isMagazine() ? "Magazine " : "Supplement ") + new_sub.getName() + " added successfully.");
-		continuePrompt();
-	}
-
-	public static void removeSubscription(ArrayList<Subscription> subs, ArrayList<Customer> custs, ArrayList<Charge> charges){
-		IO.println("REMOVE SUBCRIPTION");
-		IO.println("");
-
-		if(subs.isEmpty()){
-			IO.println("No subscriptions available.");
-		}
-		else{
-			Subscription.column();
-			
-			for(Subscription sub : subs){
-				sub.display();
-			}
-
-			IO.println("");
-			int selected_id = IO.getInt("Select subscription ID to remove: ", null);
-			IO.println("");
-			boolean valid_id = false; // Checks whether anything is deleted.
-
-			ArrayList<Integer> deleted_subs = new ArrayList<>();
-
-			// It is important to remove all the supplement from a magazine.
-			// This means looping through subs to find all the affected supplements. 
-			// If the selected ID is a subscription, we can immediately break out of the loop.
-			for(int i = 0; i < subs.size(); i++){
-				Subscription sub = subs.get(i);
-
-				if(sub.isMagazine() && sub.getId() == selected_id){
-					IO.println("Magazine " + sub.getName() + " deleted");
-					valid_id = true;
-					deleted_subs.add(sub.getId());
-					subs.remove(sub);
-					i--;
-				}
-				else if(sub.isSupplement() && sub.getMagazineId() == selected_id){
-					IO.println("Supplement " + sub.getName() + " is deleted");
-					deleted_subs.add(sub.getId());
-					subs.remove(sub);
-
-					i--;
-				}
-				else if(sub.isSupplement() && sub.getId() == selected_id){
-					valid_id = true;
-					IO.println("Supplement " + sub.getName() + " is deleted");
-					subs.remove(sub);
-					deleted_subs.add(sub.getId());
-
-					break;
-				}
-			}
-
-			// We also need to remove subscription from customer and charge list to avoid paying
-			// for non-existent subscription and ensure uniformity 
-			for(int i = 0; i < charges.size(); i++){
-				Charge charge = charges.get(i);
-
-				if(deleted_subs.contains(charge.getSubscriptionId())){
-					Customer cust = Customer.getCustomerById(custs, charge.getPaidFor());
-					cust.removeSubscription(charge.getPaidBy(), charge.getSubscriptionId());
-					charges.remove(charge);
-					i--;
-				}
-			}
-
-			if(!valid_id){
-				IO.println("Subscription ID " + selected_id + " does not exist");
-			}
-		}
-		
-		continuePrompt();	
-	}
-
-	public static void viewCustomers(ArrayList<Customer> custs){
-		IO.println("VIEW CUSTOMERS");
-		IO.println("");
-
-		if(custs.isEmpty()){
-			IO.println("No customer available.");
-		}
-		else{
-			int assoc_count = 0;
-			int pay_count = 0;
-
-			Customer.column();
-
-			for(Customer cust : custs){
-				if(cust instanceof PayingCustomer){
-					pay_count++;
-				}
-				else{
-					assoc_count++;
-				}
-
-				cust.display();
-			}
-
-			IO.println("");
-			IO.println("Total Customer: " + (assoc_count + pay_count));
-			IO.println("Total Associate Customer: " + assoc_count);
-			IO.println("Total Paying Customer: " + pay_count);
-		}
-
-		int id = IO.getInt("Search for a customer ID to view subscriptions: ", null);
-		Customer searched_customer = Customer.getCustomerById(custs, id);
-
-		if(searched_customer == null){
-			IO.println("The customer you searched for does not exist");
-		}
-		else{
-			IO.println("");
-			IO.println("Customer ID#" + searched_customer.getId());
-			IO.println("Name: " + searched_customer.getName());
-			IO.println("Email: " + searched_customer.getEmail());
-			IO.println("Is paying customer: " + (searched_customer instanceof PayingCustomer ? "true" : "false"));
-			IO.println("");
-
-			if(searched_customer instanceof PayingCustomer){
-				PayingCustomer pc = (PayingCustomer) searched_customer;
-
-				IO.println("Payment Detail");
-
-				if(pc.getPaymentMethod() instanceof CreditCard){
-					CreditCard cc = (CreditCard) pc.getPaymentMethod();
-					IO.println("Card Type: Credit Card");
-					IO.println("Card Number: " + cc.getCardNumber());
-					IO.println("Card Expiry: " + cc.getExpiryDate());
-				}
-				else{
-					DirectDebit dd = (DirectDebit) pc.getPaymentMethod();
-					IO.println("Card Type: Direct Debit");
-					IO.println("Bank Name: " + dd.getBankName());
-					IO.println("Account Number: " + dd.getAccountNumber());
-				}
-
-				IO.println("");
-			}
-
-			Subscription.column();
-			
-			for(Subscription sub : searched_customer.getSubscriptions()){
-				sub.display();	
-			}
-		}
-	
-		continuePrompt();
-	}
-
-	public static void addCustomer(ArrayList<Customer> custs){
-		IO.println("ADD CUSTOMER");
-		IO.println("");
-
-		boolean is_paying = IO.getBoolean("Is this a paying customer? (1 for Yes, 0 for No): ", null);
-		int id = custs.size() == 0 ? 1 : custs.getLast().getId() + 1;
-		Customer new_cust;
-
-		if(!is_paying){
-			new_cust = new AssociateCustomer(
-				id, 
-				IO.getString("Enter customer name: "), 
-				IO.getString("Enter customer email: ")
-			);
-		}
-		else{
-			new_cust = new PayingCustomer(
-				id, 
-				IO.getString("Enter customer name: "), 
-				IO.getString("Enter customer email: ")
-			);
-
-			IO.println("");
-			IO.println("PAYMENT METHOD");
-
-			Method method = null;
-
-			do{
-				int type = IO.getInt("Select customer's payment method (1 for credit, 2 for debit)", null);
-
-				switch(type){
-					case 1 -> method = new CreditCard(
-							new_cust.getId(), 
-							IO.getString("Enter credit card number: "),
-							IO.getString("Enter card expiry date: ")
-						);
-					case 2 -> method = new DirectDebit(
-							new_cust.getId(),
-							IO.getString("Enter account number: "),
-							IO.getString("Enter bank name: ")
-						);
-				}
-			}
-			while(method == null);
-
-			((PayingCustomer) new_cust).setPaymentMethod(method);
-		}
-
-		custs.add(new_cust);
-
-		IO.println("");
-		IO.println((new_cust instanceof PayingCustomer ? "Paying" : "Associate") + " customer " + new_cust.getName() + " created");
-		continuePrompt();
-	}
-
-	public static void removeCustomer(ArrayList<Customer> custs, ArrayList<Charge> charges){
-		IO.println("REMOVE CUSTOMER");
-		IO.println("");
-
-		if(custs.isEmpty()){
-			IO.println("No customers available.");
-		}
-		else{
-			Customer.column();
-			
-			for(Customer cust : custs){
-				cust.display();
-			}
-
-			IO.println("");
-			int selected_id = IO.getInt("Select customer ID to remove: ", null);
-			IO.println("");
-
-			Customer cust_to_delete = Customer.getCustomerById(custs, selected_id);
-
-			if(cust_to_delete == null){
-				IO.println("Customer with ID " + selected_id + " cannot be found.");
-			}
-			else{
-				// Charges must be cleared along with Associate customer
-				// subscription data.
-				for(int i = 0; i < charges.size(); i++){
-					Charge charge = charges.get(i);
-
-					if(charge.getPaidBy() == cust_to_delete.getId()){
-						Customer assoc = Customer.getCustomerById(custs, charge.getPaidFor());
-						assoc.removeSubscription(charge.getPaidBy(), charge.getSubscriptionId());
-						charges.remove(charge);
-						i--;
-					}
-				}
-
-				IO.println("Customer " + cust_to_delete.getName() + " deleted successfully.");
-				custs.remove(cust_to_delete);
-			}
-		}
-		
-		continuePrompt();	
-	}
-
-	public static void viewCharges(ArrayList<Charge> charges){
-		IO.println("VIEW CHARGES");
-		IO.println("");
-
-		Charge.column();
-
-		for(Charge charge : charges){
-			charge.display();
-		}
-
-		continuePrompt();
-	}
-
-	public static void addCharge(ArrayList<Charge> charges, ArrayList<Customer> custs, ArrayList<Subscription> subs) throws CloneNotSupportedException{
-		IO.println("ADD CHARGE");
-		IO.println("");
-		IO.println("Paying Customer");
-		IO.println("");
-
-		Customer paid_for;
-		Customer paid_by;
-		Subscription subscription;
-		Charge charge;
-
-		Customer.column();
-		for(Customer cust : custs){
-			if(cust instanceof PayingCustomer)
-				cust.display();
-		}
-		
-		IO.println("");
-		paid_by = Customer.getCustomerById(custs, IO.getInt("Select paying customer: ", null));
-		IO.println("");
-
-		if(paid_by != null){
-			if(!(paid_by instanceof PayingCustomer)){
-				IO.println("The selected customer is not a paying customer. Charge cancelled.");
-				continuePrompt();
-				return;
-			}
-		}
-		else{
-			IO.println("Customer does not exist. Charge cancelled.");
-			continuePrompt();
-			return;
-		}
-
-		IO.println("");
-		IO.println("All Customers");
-		IO.println("");
-
-		Customer.column();
-		for(Customer cust : custs){
-			cust.display();
-		}
-
-		IO.println("");
-		
-		paid_for = Customer.getCustomerById(custs, IO.getInt("Select customer: ", null));
-
-		IO.println("");
-
-		if(paid_for == null){
-			IO.println("Customer does not exist. Charge cancelled.");
-			continuePrompt();
-			return;
-		}
-
-		IO.println("All Subscriptions");
-		IO.println("");
-
-		Subscription.column();
-		for(Subscription sub : subs){
-			sub.display();
-		}
-
-		IO.println("");
-		subscription = Subscription.getSubscriptionById(subs, IO.getInt("Select subscription: ", null));
-		IO.println("");
-		
-		if(subscription != null){
-			if(subscription.isSupplement() && !paid_for.hasMagazine(subscription.getMagazineId())){
-				IO.println("Customer did not owned the required magazine to purchase this supplement.");
-				continuePrompt();
-				return;
-			}
-
-			subscription = subscription.clone();
-
-			if(paid_by.equals(paid_for)){
-				charge = ((PayingCustomer)paid_by).paySubscription(subscription);
-			}
-			else{
-				charge = ((PayingCustomer)paid_by).paySubscription(paid_for, subscription);
-			}
-
-			if(paid_by.equals(paid_for)){
-				IO.println("Paying customer " + paid_by.getName() + " made a purchase for " + subscription.getName());
-			}
-			else{
-				IO.println("Paying customer " + paid_by.getName() + " purchased a subscription for " + paid_for.getName());
-			}
-			charges.add(charge);
-			continuePrompt();
-			return;
-		}
-		else{
-			IO.println("Subscription does not exist. Charge cancelled.");
-			continuePrompt();
-			return;
-		}
-	}
+  /**
+   * Prompts user to continue 
+   * @param text Text to print to user
+   */
+  private static void prompt(String text){
+    text = text == null ? "Press enter to continue" : text;
+
+    IO.println("");
+    IO.getString(text + "...");
+    IO.println("");
+  }
+
+  /**
+   * Displays data in rows and columns
+   * @param <T>
+   * @param format The format to follow
+   * @param columns Column header 
+   * @param arr The data to display
+   * @param action A lambda function 
+   */
+  private static <T> void displayTable(String format, Object[] columns, Collection<T> arr, Consumer<T> action){
+    IO.println(String.format(format, columns));
+    
+    for(T data : arr){
+      action.accept(data);
+    }
+  }
+
+  /**
+   * Displays all the available menu
+   */
+  public static void home(){
+    IO.printText(
+      "Welcome to the Magazine Subscription System!",
+      "1. Weekly Email",
+      "2. Invoice for Paying Customers",
+      "3. View Customers",
+      "4. Add Customer",
+      "5. Delete Customer",
+      "6. Add Payer",
+      "7. View Magazines and Supplements",
+      "8. Add Subscription",
+      "9. Remove Subscription",
+      "10. Exit"
+    );
+  }
+
+  /**
+   * Render weekly email into the cli. 
+   * @param customers Customers stored in TreeMap with ID used as a key.
+   */
+  public static void weeklyEmail(TreeMap<Integer, Customer> customers){
+    Object[] customers_arr = customers.values().toArray();
+    
+    for(int i = 0, size = customers.size(); i < size; i++){
+      Customer customer = (Customer) customers_arr[i];
+
+      // This customer does not have any subscription. 
+      if(customer.getSubscriptionSize() == 0) continue;
+
+      ANSI.clear();
+      ANSI.homePosition();
+
+      // Customer does not have any payer.
+      if(customer instanceof AssociateCustomer && ((AssociateCustomer) customer).getPayer() == null){
+        IO.printText(
+          "To: " + customer.getEmail(),
+          "Subject: Your weekly subscription is inactive :(",
+          "",
+          "Dear " + customer.getName() + ",",
+          "",
+          "A payer is required to keep your subscription active.",
+          "",
+          "If you have any enquires, feel free to reach out to us.",
+          "",
+          "Warm regards,",
+          "Magazine Daily"
+        );
+      }
+      // Paying customer and associate customer with payer.
+      else{
+        IO.printText(
+          "To: " + customer.getEmail(),
+          "Subject: Your weekly subscription is ready!",
+          "",
+          "Dear " + customer.getName() + ",",
+          "",
+          "Your magazine and supplement is ready for viewing!",
+          "",
+          "Here is what you currently subscribed to: "
+        );
+        
+        for(Subscription subscription : customer.getSubscriptions()){
+          IO.println("- " + subscription.getName());
+        }
+
+        IO.printText(
+          "",
+          "If you have any enquires, feel free to reach out to us.",
+          "",
+          "Warm regards,",
+          "Magazine Daily"
+        );
+      }
+
+      prompt(i < size - 1 ? "Press enter to continue to the next customer" : null);
+    }
+  }
+
+  /**
+   * Invoice paying customers of their monthly payment.
+   * @param customers Customers stored in TreeMap with ID used as a key.
+   */
+  public static void invoiceCustomer(TreeMap<Integer, Customer> customers){
+    Object[] paying_customers = (Object[]) Customer
+    .filterCustomer(
+      customers.values(), 
+      PayingCustomer.class
+    )
+    .toArray();
+     
+    for(int i = 0, size = paying_customers.length; i < size; i++){
+      PayingCustomer paying_customer = (PayingCustomer) paying_customers[i];
+      
+      ANSI.clear();
+      ANSI.homePosition();
+
+      IO.printText(
+        "To: " + paying_customer.getEmail(),
+        "Subject: Invoice for Paying Customer " + paying_customer.getName(),
+        "",
+        "Dear " + paying_customer.getName() + ",",
+        "",
+        "Thank you for being our valued customer!",
+        "",
+        "Here is the summary for this month: ",
+        ""
+      );
+
+      if(paying_customer.getSubscriptionSize() == 0){
+        IO.printText("No available subscription.");
+      }
+      else{
+        // Display paying customer's subscription.
+        displayTable(
+          Subscription.TABLE_COLUMN, 
+          Subscription.TABLE_COLUMN_NAME, 
+          paying_customer.getSubscriptions(), 
+          e->e.display()
+        );
+        IO.println("");
+      }
+
+      if(paying_customer.getAssociateSize() == 0){
+        IO.printText("No available associate customers", "");
+      }
+      else{
+        // Display all of associate customers their subscriptions.
+        for(AssociateCustomer associate : paying_customer.getAssociates()){
+          IO.printText("", "Associate Customer: " + associate.getName());
+          
+          if(associate.getSubscriptionSize() == 0){
+            IO.printText("", "Associate customer does not have any subscription yet.");
+          }
+          else{
+            displayTable(
+              Subscription.TABLE_COLUMN, 
+              Subscription.TABLE_COLUMN_NAME, 
+              associate.getSubscriptions(), 
+              e->e.display()
+            );
+          }
+
+          IO.println("");
+        }
+      }
+
+      IO.printText(
+        String.format("Here is the total cost of all the subscriptions: $%.2f", paying_customer.getTotalCost()),
+        "",
+        "Warm regards,",
+        "Magazine Daily"
+      );
+
+      prompt(i < size - 1 ? "Press enter to continue to the next customer" : null);
+    }
+  }
+
+  /**
+   * View customers in a list format and then select a specific customer to view additional details.
+   * @param customers Customers stored in TreeMap with ID used as a key.
+   */
+  public static void viewCustomers(TreeMap<Integer, Customer> customers){
+    ANSI.clear();
+    ANSI.homePosition();
+    IO.printText("VIEW CUSTOMER", "");
+
+    displayTable(
+      Customer.TABLE_COLUMN, 
+      Customer.TABLE_COLUMN_NAME,
+      customers.values(), 
+      e->e.display()
+    );
+
+    IO.println("");
+
+    Customer customer = customers.get(IO.getInt("Enter customer ID to view its information: ", null));
+
+    IO.println("");
+
+    if(customer == null){
+      IO.println("Customer cannot be found.");
+    }
+    else{
+      ANSI.clear();
+      ANSI.homePosition();
+
+      IO.printText(
+        "Name: " + customer.getName(),
+        "Email: " + customer.getEmail(),
+        "Type: " + (customer instanceof PayingCustomer ? "Paying Customer" : "Associate Customer")
+      );
+
+      if(customer instanceof PayingCustomer){
+        PayingCustomer paying_customer = (PayingCustomer) customer;
+
+        IO.printText("", "Payment Details");
+
+        if(paying_customer.getPaymentMethod() instanceof CreditCard){
+          CreditCard m_credit = (CreditCard) paying_customer.getPaymentMethod();
+
+          IO.printText(
+            "Type: Credit Card",
+            "Card Number: " + m_credit.getCardNumber(),
+            "Card Expiry: " + m_credit.getExpiryDate()
+          );
+        }
+        else{
+          DirectDebit m_debit = (DirectDebit) paying_customer.getPaymentMethod();
+
+          IO.printText(
+            "Type: Direct Debit",
+            "Account Number: " + m_debit.getAccountNumber(),
+            "Bank Name: " + m_debit.getBankName()
+          );
+        }
+      }
+
+      IO.println("");
+
+      if(customer.getSubscriptionSize() == 0){
+        IO.println("Customer does not have subscription");
+      }
+      else{
+        displayTable(
+          Subscription.TABLE_COLUMN, 
+          Subscription.TABLE_COLUMN_NAME,
+          customer.getSubscriptions(), 
+          e->e.display()
+        );
+      }
+    }
+    
+    prompt(null);
+  }
+
+  /**
+   * Add customer to the system. 
+   * @param customers Customers stored in TreeMap with ID used as a key.
+   */
+  public static void addCustomer(TreeMap<Integer, Customer> customers){
+    ANSI.clear();
+    ANSI.homePosition();
+    IO.printText("ADD CUSTOMER", "");
+    
+    Method method = null;
+    Customer customer = null;
+
+    do{
+      try{
+        customer = Customer.getType(IO.getInt("Is this a paying customer? (1 for Yes, 0 for No): ", null));
+      }
+      catch(RuntimeException e){} 
+    }
+    while(customer == null);
+
+    customer.setId(customers.size() == 0 ? 1 : customers.lastKey() + 1);
+    customer.setName(IO.getString("Enter customer name: "));
+    customer.setEmail(IO.getString("Enter customer email: "));
+
+    if(customer instanceof PayingCustomer){
+      IO.printText("", "PAYMENT METHOD");
+
+      do{
+        try{
+          method = Method.getType(IO.getInt("Select customer's payment method (1 for Credit Card, 2 for Direct Debit): ", null));
+        }
+        catch(RuntimeException e){} 
+      }
+      while(method == null);
+
+      if(method instanceof DirectDebit){
+        DirectDebit m_debit = (DirectDebit) method;
+        m_debit.setAccountNumber(IO.getString("Enter account number: "));
+        m_debit.setBankName(IO.getString("Enter bank name: "));
+      }
+      else{
+        CreditCard m_credit = (CreditCard) method;
+        m_credit.setCardNumber(IO.getString("Enter account number: "));
+        m_credit.setExpiryDate(IO.getString("Enter bank name: "));
+      }
+      
+      ((PayingCustomer) customer).setPaymentMethod(method);
+    }
+    else{
+      ArrayList<Customer> payers = Customer.filterCustomer(customers.values(), PayingCustomer.class);
+
+      IO.printText("", "LIST OF PAYING CUSTOMERS", "");
+      displayTable(
+        Customer.TABLE_COLUMN, 
+        Customer.TABLE_COLUMN_NAME, 
+        payers, 
+        e->e.display()
+      );
+
+      Customer paying_customer = customers.get(IO.getInt("Select payer: ", null));
+
+      if(paying_customer == null){
+        IO.println("Unable to find payer by ID.");
+        prompt(null);
+        return;
+      }
+      else if(paying_customer instanceof AssociateCustomer){
+        IO.println("Customer is not a paying customer");
+        prompt(null);
+        return;
+      }
+      else{
+        ((PayingCustomer) paying_customer).addAssociate((AssociateCustomer) customer);
+      }
+    }
+
+    customers.put(customer.getId(), customer);
+    IO.printText("", customer.getName() + " added successfully");
+
+    prompt(null);
+  }
+
+  /**
+   * Deletes the customer from the system. 
+   * @param customers Customers stored in TreeMap with ID used as a key.
+   */
+  public static void deleteCustomer(TreeMap<Integer, Customer> customers){
+    ANSI.clear();
+    ANSI.homePosition();
+    IO.printText("DELETE CUSTOMER", "");
+
+    displayTable(
+      Customer.TABLE_COLUMN, 
+      Customer.TABLE_COLUMN_NAME,
+      customers.values(), 
+      e->e.display()
+    );
+
+    Customer customer = customers.get(IO.getInt("Select one of the customer: ", null));
+
+    if(customer == null){
+      IO.printText("", "Unable to find customer");
+    }
+    else{
+      if(customer instanceof PayingCustomer){
+        PayingCustomer p_customer = (PayingCustomer) customer;
+        p_customer.removeAssociate();
+      }
+      else{
+        AssociateCustomer a_customer = (AssociateCustomer) customer;
+        
+        if(a_customer.getPayer() != null){
+          a_customer.getPayer().removeAssociate(a_customer);
+        }
+      }
+
+      customers.entrySet().removeIf(e->e.getValue().equals(customer));
+      IO.printText("", customer.getName() + " deleted successfully.");
+    }
+  
+    prompt(null);
+  }
+
+  /**
+   * Set a payer for associate customer.
+   * @param customers Customers stored in TreeMap with ID used as a key.
+   */
+  public static void setPayer(TreeMap<Integer, Customer> customers){
+    ANSI.clear();
+    ANSI.homePosition();
+    IO.printText("SET PAYER", "");
+    
+    ArrayList<Customer> associate_customers = new ArrayList<>();
+    ArrayList<Customer> paying_customers = new ArrayList<>();
+    Customer associate_customer = null;
+    Customer paying_customer = null;
+
+    for(Customer customer : customers.values()){
+      if(customer instanceof PayingCustomer){
+        paying_customers.add(customer);
+      }
+      else{
+        if(((AssociateCustomer) customer).getPayer() == null){
+          associate_customers.add(customer);
+        }
+      }
+    }
+
+    if(associate_customers.size() == 0){
+      IO.println("All the associates have a payer");
+      prompt(null);
+      return;
+    }
+
+    IO.println("ASSOCIATE CUSTOMER");
+    displayTable(
+      Customer.TABLE_COLUMN, 
+      Customer.TABLE_COLUMN_NAME,
+      associate_customers, 
+      e->e.display()
+    );
+
+    associate_customer = customers.get(IO.getInt("Enter associate ID: ", null));
+
+    if(!associate_customers.contains(associate_customer)){
+      IO.printText("", "The ID is not part of the list.");
+      prompt(null);
+      return;
+    }
+
+    ANSI.clear();
+    ANSI.homePosition();
+    IO.printText("", "PAYING CUSTOMER");
+    displayTable(
+      Customer.TABLE_COLUMN, 
+      Customer.TABLE_COLUMN_NAME,
+      paying_customers, 
+      e->e.display()
+    );
+
+    IO.println("");
+    paying_customer = customers.get(IO.getInt("Enter paying customer ID: ", null));
+
+    if(!paying_customers.contains(paying_customer)){
+      IO.printText("", "The ID is not part of the list.");
+      prompt(null);
+      return;
+    }
+
+    ((PayingCustomer) paying_customer).addAssociate((AssociateCustomer) associate_customer);
+
+    IO.printText("", "Payer " + paying_customer.getName() + " set to associate " + associate_customer.getName() + " successfully");
+    prompt(null);
+  }
+
+  /**
+   * View all magazines and supplements.
+   * @param subscriptions Subscriptions stored in TreeMap with ID used as a key.    * 
+   */
+  public static void viewMagazineSupplement(TreeMap<Integer, Subscription> subscriptions){
+    ANSI.clear();
+    ANSI.homePosition();
+    IO.printText("VIEW MAGAZINES AND SUPPLEMENTS", "");
+  
+    displayTable(
+      Subscription.TABLE_COLUMN, 
+      Subscription.TABLE_COLUMN_NAME,
+      subscriptions.values(), 
+      e->e.display()
+    );
+  
+    prompt(null);
+  }
+
+  /**
+   * Add subscription to a selected customer.
+   * @param subscriptions Subscriptions stored in TreeMap with ID used as a key.
+   * @param customers Customers stored in TreeMap with ID used as a key.
+   */
+  public static void addSubscription(TreeMap<Integer, Subscription> subscriptions, TreeMap<Integer, Customer> customers){
+    Customer customer = null;
+    Subscription subscription = null;
+
+    ANSI.clear();
+    ANSI.homePosition();
+    IO.printText("ADD SUBSCRIPTION", "");
+
+    displayTable(
+      Customer.TABLE_COLUMN, 
+      Customer.TABLE_COLUMN_NAME, 
+      customers.values(), 
+      e->e.display()
+    );
+
+    customer = customers.get(IO.getInt("Select customer from the list: ", null));
+
+    if(customer == null){
+      IO.printText("", "Unable to set subscription from a non-existing customer");
+      prompt(null);
+      return;
+    }
+
+    ANSI.clear();
+    ANSI.homePosition();
+    IO.printText("ADD SUBSCRIPTION", "");
+
+    displayTable(
+      Subscription.TABLE_COLUMN, 
+      Subscription.TABLE_COLUMN_NAME,
+      subscriptions.values(), 
+      e->e.display()  
+    );
+
+    subscription = subscriptions.get(IO.getInt("Select subscription from the list: ", null));
+
+    if(subscription == null){
+      IO.printText("", "Subscription is invalid.");
+      prompt(null);
+      return;
+    }
+
+    if(subscription.isSupplement() && !customer.hasMagazine(subscription.getMagazine().getId())){
+      IO.printText("", "Customer do not have the required magazine to read the subscription.");
+      prompt(null);
+      return;
+    }
+
+    customer.addSubscriptions(subscription);
+    IO.printText("", "Subscription " + subscription.getName() + " added to " + customer.getName());
+    prompt(null);
+  }
+
+  /**
+   * Remove subscription from a selected customer
+   * @param subscriptions Subscriptions stored in TreeMap with ID used as a key.
+   * @param customers Customers stored in TreeMap with ID used as a key.
+   */
+  public static void removeSubscription(TreeMap<Integer, Subscription> subscriptions, TreeMap<Integer, Customer> customers){
+    Customer customer = null;
+    Subscription subscription = null;
+    
+    ANSI.clear();
+    ANSI.homePosition();
+    IO.printText("REMOVE SUBSCRIPTION", "");
+
+    displayTable(
+      Customer.TABLE_COLUMN, 
+      Customer.TABLE_COLUMN_NAME, 
+      customers.values(), 
+      e->e.display()
+    );
+
+    customer = customers.get(IO.getInt("Select customer from the list: ", null));
+
+    if(customer == null){
+      IO.printText("", "Unable to remove subscription from a non-existing customer");
+      prompt(null);
+      return;
+    }
+
+    if(customer.getSubscriptionSize() == 0){
+      IO.printText("", "Nothing to remove from customer's subscription");
+      prompt(null);
+      return;
+    }
+
+    ANSI.clear();
+    ANSI.homePosition();
+    IO.printText("REMOVE SUBSCRIPTION", "");
+
+    displayTable(
+      Subscription.TABLE_COLUMN, 
+      Subscription.TABLE_COLUMN_NAME,
+      customer.getSubscriptions(), 
+      e->e.display()  
+    );
+
+    subscription = subscriptions.get(IO.getInt("Select subscription from the list: ", null));
+
+    if(subscription == null){
+      IO.printText("", "Subscription is invalid.");
+      prompt(null);
+      return;
+    }
+
+    customer.removeSubscription(subscription);
+  }
 }
