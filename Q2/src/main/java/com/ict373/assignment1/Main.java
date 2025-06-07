@@ -44,10 +44,11 @@ public class Main{
 					case 4 -> Page.addCustomer(customers);
 					case 5 -> Page.deleteCustomer(customers);
 					case 6 -> Page.setPayer(customers);
-					case 7 -> Page.viewMagazineSupplement(subscriptions);
-					case 8 -> Page.addSubscription(subscriptions, customers);
-					case 9 -> Page.removeSubscription(subscriptions, customers);
-					case 10 -> options = 0;
+					case 7 -> Page.removePayer(customers);
+					case 8 -> Page.viewMagazineSupplement(subscriptions);
+					case 9 -> Page.addSubscription(subscriptions, customers);
+					case 10 -> Page.removeSubscription(subscriptions, customers);
+					case 11 -> options = 0;
 					default -> {
 						options = -1;
 						IO.println("Selection unavailable.");
@@ -60,6 +61,7 @@ public class Main{
 		}
 
 		IO.println("Thank you for using Magazine subscription system!");
+		IO.close();
 	}
 
 	public static void init() throws IOException{

@@ -31,13 +31,6 @@ public abstract class Subscription{
 	 */
 	private double cost;
 
-	/** 
-	 * The magazine associated to this subscription.
-	 * This stores data coming from the CSV so that a reference to
-	 * a magazine object can be set.
-	 */
-	private int magazine_id;
-
 	public static final String TABLE_COLUMN = "%-3s | %-32s | %-7s | %-10s";
 	
 	public static final String[] TABLE_COLUMN_NAME = {"ID", "Name", "Cost", "Type"};
@@ -65,7 +58,6 @@ public abstract class Subscription{
 		this.name = name;
 		this.cost = cost;
 		this.magazine = magazine == null ? null : magazine;
-		this.magazine_id = magazine == null ? 0 : magazine.getId();
 	}
 
 	/**
@@ -118,7 +110,6 @@ public abstract class Subscription{
 			throw new RuntimeException("Magazine cannot be null");
 
 		this.magazine = magazine;
-		this.magazine_id = magazine.getId();
 	}
 
 	/**
@@ -151,14 +142,6 @@ public abstract class Subscription{
 	 */
 	public void setCost(double cost){
 		this.cost = cost;
-	}
-
-	/**
-	 * Get the magazine ID from CSV 
-	 * @return The magazine ID that comes from the CSV
-	 */
-	public int getMagazineId(){
-		return magazine_id;
 	}
 
 	/**

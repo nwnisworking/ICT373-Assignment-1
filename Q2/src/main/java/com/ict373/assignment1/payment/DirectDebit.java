@@ -63,12 +63,4 @@ public class DirectDebit implements Method{
 	public void setBankName(String bank_name){
 		this.bank_name = bank_name;
 	}
-
-	/**
-	 * Direct Debit formatted in CSV
-	 */
-	@Override
-	public String toString(){
-		return String.format("%d,%s,%s", 2, account_number, bank_name);
-	}
 }

@@ -109,7 +109,7 @@ public class PayingCustomer extends Customer{
 	 * @return An array list of associate customers.
 	 */
 	public ArrayList<AssociateCustomer> getAssociates(){
-		return associates;
+		return new ArrayList<AssociateCustomer>(associates);
 	}
 
 	@Override

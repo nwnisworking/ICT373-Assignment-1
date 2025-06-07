@@ -130,7 +130,7 @@ public abstract class Customer{
    * @return ArrayList of Subscription objects.
    */
   public ArrayList<Subscription> getSubscriptions(){
-    return subscriptions;
+    return new ArrayList<>(subscriptions);
   }
 
   /**

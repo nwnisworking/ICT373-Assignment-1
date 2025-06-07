@@ -63,12 +63,4 @@ public class CreditCard implements Method{
 	public void setExpiryDate(String expiry_date){
 		this.expiry_date = expiry_date;
 	}
-
-	/**
-	 * Credit Card formatted in CSV
-	 */
-	@Override
-	public String toString(){
-		return String.format("%d,%s,%s", 1, card_number, expiry_date);
-	}
 }

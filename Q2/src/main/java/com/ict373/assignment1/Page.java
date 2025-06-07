@@ -52,11 +52,12 @@ public class Page{
       "3. View Customers",
       "4. Add Customer",
       "5. Delete Customer",
-      "6. Add Payer",
-      "7. View Magazines and Supplements",
-      "8. Add Subscription",
-      "9. Remove Subscription",
-      "10. Exit"
+      "6. Add Payer to Associate",
+      "7. Remove Payer from Associate",
+      "8. View Magazines and Supplements",
+      "9. Add Subscription",
+      "10. Remove Subscription",
+      "11. Exit"
     );
   }
 
@@ -133,6 +134,8 @@ public class Page{
       PayingCustomer.class
     )
     .toArray();
+    
+    double total[] = {0};
      
     for(int i = 0, size = paying_customers.length; i < size; i++){
       PayingCustomer paying_customer = (PayingCustomer) paying_customers[i];
@@ -161,9 +164,12 @@ public class Page{
           Subscription.TABLE_COLUMN, 
           Subscription.TABLE_COLUMN_NAME, 
           paying_customer.getSubscriptions(), 
-          e->e.display()
+          e->{
+            e.display();
+            total[0]+= e.getCost();
+          }
         );
-        IO.println("");
+        IO.printText("", String.format("Total cost: %.2f", total[0]), "");
       }
 
       if(paying_customer.getAssociateSize() == 0){
@@ -178,15 +184,20 @@ public class Page{
             IO.printText("", "Associate customer does not have any subscription yet.");
           }
           else{
+            total[0] = 0;
+            
             displayTable(
               Subscription.TABLE_COLUMN, 
               Subscription.TABLE_COLUMN_NAME, 
               associate.getSubscriptions(), 
-              e->e.display()
+              e->{
+                e.display();
+                total[0]+= e.getCost();
+              }
             );
           }
 
-          IO.println("");
+          IO.printText("",String.format("Total cost for %s's subscription: $%.2f", associate.getName(), total[0]), "");
         }
       }
 
@@ -299,7 +310,7 @@ public class Page{
     }
     while(customer == null);
 
-    customer.setId(customers.size() == 0 ? 1 : customers.lastKey() + 1);
+    customer.setId(customers.isEmpty() ? 1 : customers.lastKey() + 1);
     customer.setName(IO.getString("Enter customer name: "));
     customer.setEmail(IO.getString("Enter customer email: "));
 
@@ -321,7 +332,7 @@ public class Page{
       }
       else{
         CreditCard m_credit = (CreditCard) method;
-        m_credit.setCardNumber(IO.getString("Enter account number: "));
+        m_credit.setCardNumber(IO.getString("Enter credit card number: "));
         m_credit.setExpiryDate(IO.getString("Enter bank name: "));
       }
       
@@ -427,7 +438,7 @@ public class Page{
       }
     }
 
-    if(associate_customers.size() == 0){
+    if(associate_customers.isEmpty()){
       IO.println("All the associates have a payer");
       prompt(null);
       return;
@@ -471,6 +482,79 @@ public class Page{
     ((PayingCustomer) paying_customer).addAssociate((AssociateCustomer) associate_customer);
 
     IO.printText("", "Payer " + paying_customer.getName() + " set to associate " + associate_customer.getName() + " successfully");
+    prompt(null);
+  }
+  
+  public static void removePayer(TreeMap<Integer, Customer> customers){
+    ANSI.clear();
+    ANSI.homePosition();
+    IO.printText("REMOVE PAYER", "");
+
+    ArrayList<AssociateCustomer> associate_customers = null;
+    ArrayList<Customer> paying_customers = Customer.filterCustomer(customers.values(), PayingCustomer.class);
+    Customer paying_customer = null;
+    Customer associate_customer = null;
+    
+    IO.println("PAYING CUSTOMER");
+    displayTable(
+        Customer.TABLE_COLUMN, 
+        Customer.TABLE_COLUMN_NAME, 
+        paying_customers, 
+        e->e.display()
+    );
+    
+    IO.println("");
+    paying_customer = customers.get(IO.getInt("Enter ID of the paying customer: ", null));
+    IO.println("");
+
+    if(paying_customer == null){
+      IO.println("Paying customer does not exist");
+      prompt(null);
+      return;
+    }
+    else if(!paying_customers.contains(paying_customer)){
+      IO.println("ID is not part of the list");
+      prompt(null);
+      return;
+    }
+
+    associate_customers = ((PayingCustomer) paying_customer).getAssociates();
+
+    if(associate_customers.isEmpty()){
+      IO.println("Paying customer " + paying_customer.getName() + " does not have an associate.");
+      prompt(null);
+      return;
+    }
+    
+    ANSI.clear();
+    ANSI.homePosition();
+    IO.printText("REMOVE PAYER", "");
+
+    IO.println("ASSOCIATES");
+    displayTable(
+      Customer.TABLE_COLUMN,
+      Customer.TABLE_COLUMN_NAME,
+      associate_customers,
+      e->e.display()
+    );
+    
+    IO.println("");
+    associate_customer = customers.get(IO.getInt("Enter ID of the associate customer: ", null));
+    IO.println("");
+    
+    if(associate_customer == null){
+      IO.println("Associate Customer does not exist");
+      prompt(null);
+      return;
+    }
+    else if(!associate_customers.contains((AssociateCustomer) associate_customer)){
+      IO.println("ID is not part of the list");
+      prompt(null);
+      return;
+    }
+    
+    ((PayingCustomer) paying_customer).removeAssociate((AssociateCustomer) associate_customer);
+    IO.println("Paying customer " + paying_customer.getName() + " removed " + associate_customer.getName() + " from associate list");
     prompt(null);
   }
 
@@ -605,5 +689,7 @@ public class Page{
     }
 
     customer.removeSubscription(subscription);
+    IO.printText("", "Subscription " + subscription.getName() + " removed from " + customer.getName());
+
   }
 }

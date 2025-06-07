@@ -250,6 +250,10 @@ public class IO{
     System.out.println(data);
   }
 
+  /**
+   * Prints text in a series of lines
+   * @param data A spread operator containing string
+   */
   public static void printText(String ...data){
     for(String text : data){
       println(text);
