@@ -1,5 +1,6 @@
 package com.ict373.assignment1.customers;
 
+import com.ict373.assignment1.magazines.Magazine;
 import com.ict373.assignment1.magazines.Subscription;
 import com.ict373.assignment1.utils.IO;
 
@@ -8,6 +9,8 @@ import java.util.Collection;
 
 /**
  * Represents a customer in the system.
+ * 
+ * @author nwnisworking
  */
 public abstract class Customer{
   /**
@@ -115,14 +118,8 @@ public abstract class Customer{
    * @param magazine Magazine to find in the list of subscriptions.
    * @return True if the customer has the magazine, false otherwise.
    */
-  public boolean hasMagazine(int id){
-    for(Subscription subscription : subscriptions){
-      if(subscription.isMagazine() && subscription.getId() == id){
-        return true;
-      }
-    }
-
-    return false;
+  public boolean hasMagazine(Magazine magazine){
+    return subscriptions.contains(magazine);
   }
 
   /**
@@ -148,9 +145,11 @@ public abstract class Customer{
    * @param subscription Subscription to be removed.
    */
   public void removeSubscription(Subscription subscription){
+    // Clears the subscription first.
     subscriptions.remove(subscription);
 
-    subscriptions.removeIf(e->!subscriptions.contains(subscription) && e.isSupplement() && e.getMagazine().getId() == subscription.getId());
+    // The second part makes sure there is no duplicate magazine before removing the supplements
+    subscriptions.removeIf(e->!subscriptions.contains(subscription) && e.isSupplement() && e.getMagazine().equals(subscription));
   }
 
   /**

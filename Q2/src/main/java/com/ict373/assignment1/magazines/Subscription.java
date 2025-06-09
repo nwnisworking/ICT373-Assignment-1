@@ -8,6 +8,8 @@ import com.ict373.assignment1.utils.IO;
 /**
  * Represents a subscription to a magazine or a supplement.
  * This class is abstract and should be extended by subscription types: magazine or supplement.
+ * 
+ * @author nwnisworking
  */
 public abstract class Subscription{
 	/**

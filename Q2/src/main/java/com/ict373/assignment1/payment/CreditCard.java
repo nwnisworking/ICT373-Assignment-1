@@ -2,6 +2,8 @@ package com.ict373.assignment1.payment;
 
 /**
  * Represents a credit card payment method.
+ * 
+ * @author nwnisworking
  */
 public class CreditCard implements Method{
 	/**

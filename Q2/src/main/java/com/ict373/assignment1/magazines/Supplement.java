@@ -2,6 +2,8 @@ package com.ict373.assignment1.magazines;
 
 /**
  * Represents a supplement to a magazine subscription.
+ * 
+ * @author nwnisworking
  */
 public class Supplement extends Subscription{
 	/**

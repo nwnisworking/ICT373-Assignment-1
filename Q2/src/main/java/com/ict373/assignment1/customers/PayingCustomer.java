@@ -7,6 +7,8 @@ import com.ict373.assignment1.payment.Method;
  * Represents a paying customer in the system.
  * A paying customer is a type of customer that can pay subscriptions for themselves or for associate customers.
  * They can also have a payment method associated with them, such as a credit card or debit card.
+ * 
+ * @author nwnisworking
  */
 public class PayingCustomer extends Customer{
   /**

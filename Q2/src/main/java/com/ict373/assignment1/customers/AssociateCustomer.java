@@ -1,8 +1,13 @@
 package com.ict373.assignment1.customers;
 
 /**
+ * Associate Customer class
  * Represents an associate customer.
  * An associate customer is a type of customer that does not pay for subscriptions.
+ * 
+ * @author nwnisworking
+ * @date 9/6/2025
+ * @filename AssociateCustomer.java
  */
 public class AssociateCustomer extends Customer{
 	/**

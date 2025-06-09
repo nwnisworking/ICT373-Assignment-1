@@ -67,7 +67,7 @@ public class Page{
    */
   public static void weeklyEmail(TreeMap<Integer, Customer> customers){
     Object[] customers_arr = customers.values().toArray();
-    
+
     for(int i = 0, size = customers.size(); i < size; i++){
       Customer customer = (Customer) customers_arr[i];
 
@@ -135,10 +135,9 @@ public class Page{
     )
     .toArray();
     
-    double total[] = {0};
-     
     for(int i = 0, size = paying_customers.length; i < size; i++){
       PayingCustomer paying_customer = (PayingCustomer) paying_customers[i];
+      double total[] = {0};
       
       ANSI.clear();
       ANSI.homePosition();
@@ -614,7 +613,7 @@ public class Page{
       return;
     }
 
-    if(subscription.isSupplement() && !customer.hasMagazine(subscription.getMagazine().getId())){
+    if(subscription.isSupplement() && !customer.hasMagazine(subscription.getMagazine())){
       IO.printText("", "Customer do not have the required magazine to read the subscription.");
       prompt(null);
       return;

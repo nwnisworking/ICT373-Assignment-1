@@ -2,6 +2,8 @@ package com.ict373.assignment1.payment;
 
 /**
  * A payment method interface 
+ * 
+ * @author nwnisworking
  */
 public interface Method{
   /**
