@@ -21,7 +21,7 @@ public class Page{
     text = text == null ? "Press enter to continue" : text;
 
     IO.println("");
-    IO.getString(text + "...");
+    IO.getEnter(text + "...");
     IO.println("");
   }
 
@@ -507,12 +507,7 @@ public class Page{
     paying_customer = customers.get(IO.getInt("Enter ID of the paying customer: ", null));
     IO.println("");
 
-    if(paying_customer == null){
-      IO.println("Paying customer does not exist");
-      prompt(null);
-      return;
-    }
-    else if(!paying_customers.contains(paying_customer)){
+    if(paying_customer == null || !paying_customers.contains(paying_customer)){
       IO.println("ID is not part of the list");
       prompt(null);
       return;
@@ -542,12 +537,7 @@ public class Page{
     associate_customer = customers.get(IO.getInt("Enter ID of the associate customer: ", null));
     IO.println("");
     
-    if(associate_customer == null){
-      IO.println("Associate Customer does not exist");
-      prompt(null);
-      return;
-    }
-    else if(!associate_customers.contains((AssociateCustomer) associate_customer)){
+    if(associate_customer == null || !associate_customers.contains((AssociateCustomer) associate_customer)){
       IO.println("ID is not part of the list");
       prompt(null);
       return;
@@ -687,9 +677,14 @@ public class Page{
       prompt(null);
       return;
     }
+    else if(!customer.getSubscriptions().contains(subscription)){
+      IO.printText("", "Customer " + customer.getName() + " does not have a subscription " + subscription.getName());
+      prompt(null);
+      return;
+    }
 
     customer.removeSubscription(subscription);
     IO.printText("", "Subscription " + subscription.getName() + " removed from " + customer.getName());
-
+    prompt(null);
   }
 }

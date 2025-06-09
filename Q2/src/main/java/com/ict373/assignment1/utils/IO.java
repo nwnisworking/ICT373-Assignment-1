@@ -23,9 +23,22 @@ public class IO{
   public static String getString(String msg){
     do{
       print(msg);
-      return reader.nextLine();
+      
+      String text = reader.nextLine();
+      
+      if(!text.isBlank())
+        return text;
     }
     while(true);
+  }
+  
+  /**
+   * Get a \n input from the user
+   * @param msg display message to prompt user
+   */
+  public static void getEnter(String msg){
+    println(msg);
+    reader.nextLine();
   }
 
 	/**
