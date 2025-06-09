@@ -1,9 +1,15 @@
 package com.ict373.assignment1.magazines;
 
 /**
- * Represents a magazine.
+ * <p><strong>Magazine class</strong></p>
+ * 
+ * <p>Represents a magazine.</p>
+ * <p>A paying customer is a type of customer that can pay subscriptions for themselves or for associate customers.
+ * They can also have a payment method associated with them, such as a credit card or debit card.</p>
  * 
  * @author nwnisworking
+ * @date 9/6/2025
+ * @filename Magazine.java
  */
 public class Magazine extends Subscription{
 	/**

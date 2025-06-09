@@ -1,9 +1,12 @@
 package com.ict373.assignment1.magazines;
-
 /**
- * Represents a supplement to a magazine subscription.
+ * <p><strong>Supplement class</strong></p>
+ * 
+ * <p> Represents a supplement to a magazine subscription.</p>
  * 
  * @author nwnisworking
+ * @date 9/6/2025
+ * @filename Supplement.java
  */
 public class Supplement extends Subscription{
 	/**

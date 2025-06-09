@@ -1,9 +1,12 @@
 package com.ict373.assignment1.payment;
 
 /**
- * A payment method interface 
+ * <p><strong>Method interface</strong></p>
+ * <p>Represents a payment method.</p>
  * 
  * @author nwnisworking
+ * @date 9/6/2025
+ * @filename Method.java
  */
 public interface Method{
   /**

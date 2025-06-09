@@ -5,7 +5,12 @@ import java.util.Optional;
 import java.util.Scanner;
 
 /** 
- * Provides methods for reading input from the console and printing output.
+ * <p><strong>IO class</strong></p>
+ * <p>Provides methods for reading input from the console and printing output.</p>
+ * 
+ * @author nwnisworking
+ * @date 9/6/2025
+ * @filename IO.java
  */
 public class IO{
 	/**

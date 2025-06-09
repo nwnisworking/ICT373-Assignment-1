@@ -6,11 +6,19 @@ import com.ict373.assignment1.utils.IO;
 
 import java.util.ArrayList;
 import java.util.Collection;
-
 /**
+ * <p><strong>Customer class</strong></p>
  * Represents a customer in the system.
  * 
+ * <p>Assumptions:</p>
+ * <p>- A customer can have multiple subscriptions, including duplicate subscriptions.</p>
+ * <p>- The customer has a unique identifier to distinguish them from others.</p>
+ * <p>- The customer can be of two types: AssociateCustomer or PayingCustomer.</p>
+ * <p>- The customer can have subscriptions to magazines, which can include supplements.</p>
+ * 
  * @author nwnisworking
+ * @date 9/6/2025
+ * @filename Customer.java
  */
 public abstract class Customer{
   /**

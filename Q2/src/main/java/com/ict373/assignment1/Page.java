@@ -3,6 +3,7 @@ package com.ict373.assignment1;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.TreeMap;
+import java.util.function.Consumer;
 
 import com.ict373.assignment1.customers.*;
 import com.ict373.assignment1.payment.*;
@@ -10,8 +11,15 @@ import com.ict373.assignment1.magazines.Subscription;
 import com.ict373.assignment1.utils.ANSI;
 import com.ict373.assignment1.utils.IO;
 
-import java.util.function.Consumer;
 
+/**
+ * <p><strong>Page class</strong></p>
+ * <p>Handles all the pages in the CLI application.</p>
+ *
+ * @author nwnisworking
+ * @date 9/6/2025
+ * @filename Page.java 
+ */
 public class Page{
   /**
    * Prompts user to continue 
