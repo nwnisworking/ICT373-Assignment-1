@@ -1,9 +1,11 @@
 package com.ict373.assignment1.payment;
-
 /**
- * Represents a credit card payment method.
+ * <p><strong>Credit Card class</strong></p>
+ * <p>Represents a credit card payment method.</p>
  * 
  * @author nwnisworking
+ * @date 9/6/2025
+ * @filename CreditCard.java
  */
 public class CreditCard implements Method{
 	/**

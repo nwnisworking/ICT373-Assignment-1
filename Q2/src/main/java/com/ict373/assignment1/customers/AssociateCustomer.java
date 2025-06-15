@@ -1,9 +1,13 @@
 package com.ict373.assignment1.customers;
 
 /**
- * Associate Customer class
+ * <p><strong>Associate Customer class</strong></p>
+ * <p>
  * Represents an associate customer.
  * An associate customer is a type of customer that does not pay for subscriptions.
+ * </p>
+ * <p>Assumptions:</p> 
+ * <p>- The payer must be a valid PayingCustomer.</p>
  * 
  * @author nwnisworking
  * @date 9/6/2025

@@ -1,9 +1,12 @@
 package com.ict373.assignment1.payment;
 
 /**
- * Represents a Direct Debit payment method.
+ * <p><strong>DirectDebit class</strong></p>
+ * <p>Represents a Direct Debit payment method.</p>
  * 
  * @author nwnisworking
+ * @date 9/6/2025
+ * @filename DirectDebit.java
  */
 public class DirectDebit implements Method{
 	/**

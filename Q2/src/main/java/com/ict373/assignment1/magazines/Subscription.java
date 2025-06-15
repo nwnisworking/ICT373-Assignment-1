@@ -4,12 +4,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import com.ict373.assignment1.utils.IO;
-
 /**
- * Represents a subscription to a magazine or a supplement.
- * This class is abstract and should be extended by subscription types: magazine or supplement.
+ * <p><strong>Subscription class</strong></p>
+ * 
+ * <p>Represents a subscription to a magazine or a supplement.</p>
+ * <p>This class is abstract and should be extended by subscription types: magazine or supplement.</p>
+ * 
+ * <p>Assumptions:</p>
+ * <p>- Subscription can either be a magazine or a supplement</p>
  * 
  * @author nwnisworking
+ * @date 9/6/2025
+ * @filename Subscription.java
  */
 public abstract class Subscription{
 	/**

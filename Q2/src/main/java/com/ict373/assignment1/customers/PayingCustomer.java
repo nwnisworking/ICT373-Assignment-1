@@ -3,12 +3,23 @@ package com.ict373.assignment1.customers;
 import java.util.ArrayList;
 
 import com.ict373.assignment1.payment.Method;
+
 /**
+ * <p><strong>PayingCustomer class</strong></p>
+ * 
  * Represents a paying customer in the system.
  * A paying customer is a type of customer that can pay subscriptions for themselves or for associate customers.
  * They can also have a payment method associated with them, such as a credit card or debit card.
  * 
+ * <p>Assumptions:</p>
+ * <p>- A paying customer can have multiple associate customers.</p>
+ * <p>- Each associate customer can only be associated with one paying customer at a time.</p>
+ * <p>- The paying customer can add or remove associate customers.</p>
+ * <p>- The paying customer must have a payment method set, which is used for processing payments.</p>
+ * 
  * @author nwnisworking
+ * @date 9/6/2025
+ * @filename PayingCustomer.java
  */
 public class PayingCustomer extends Customer{
   /**
