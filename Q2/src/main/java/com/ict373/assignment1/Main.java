@@ -24,7 +24,8 @@ public class Main{
 
 	public static void main(String[] args){
 		try{
-			init(); 
+			if(!IO.getBoolean("Would you like to start with empty data? ", null))
+				init(); 
 
 			int options = -1;
 
