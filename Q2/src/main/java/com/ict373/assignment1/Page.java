@@ -6,7 +6,7 @@ import java.util.TreeMap;
 
 import com.ict373.assignment1.customers.*;
 import com.ict373.assignment1.payment.*;
-import com.ict373.assignment1.magazines.Subscription;
+import com.ict373.assignment1.magazines.*;
 import com.ict373.assignment1.utils.ANSI;
 import com.ict373.assignment1.utils.IO;
 
@@ -57,7 +57,9 @@ public class Page{
       "8. View Magazines and Supplements",
       "9. Add Subscription",
       "10. Remove Subscription",
-      "11. Exit"
+      "11. Create Magazine / Supplement",
+      "12. Delete Magazine / Supplement",
+      "13. Exit"
     );
   }
 
@@ -484,6 +486,10 @@ public class Page{
     prompt(null);
   }
   
+  /**
+   * Remove payer from the associate
+   * @param customers Customers stored in TreeMap with ID used as a key.
+   */
   public static void removePayer(TreeMap<Integer, Customer> customers){
     ANSI.clear();
     ANSI.homePosition();
@@ -549,7 +555,7 @@ public class Page{
 
   /**
    * View all magazines and supplements.
-   * @param subscriptions Subscriptions stored in TreeMap with ID used as a key.    * 
+   * @param subscriptions Subscriptions stored in TreeMap with ID used as a key.
    */
   public static void viewMagazineSupplement(TreeMap<Integer, Subscription> subscriptions){
     ANSI.clear();
@@ -684,6 +690,108 @@ public class Page{
 
     customer.removeSubscription(subscription);
     IO.printText("", "Subscription " + subscription.getName() + " removed from " + customer.getName());
+    prompt(null);
+  }
+
+  public static void createMagazineSupplement(TreeMap<Integer, Subscription> subscriptions){
+    ANSI.clear();
+    ANSI.homePosition();
+    IO.printText("CREATE MAGAZINE / SUPPLEMENT", "");
+
+    Subscription subscription = null;
+    String type = null;
+
+    do{
+      try{
+        subscription = Subscription.getType(IO.getInt("Is this a magazine? (1 for Yes, 0 for No): ", null));
+        type = subscription.isMagazine() ? "Magazine" : "Subscription";
+      }
+      catch(RuntimeException e){} 
+    }
+    while(subscription == null);
+    
+    subscription.setId(subscriptions.isEmpty() ? 1 : subscriptions.lastKey() + 1);
+    subscription.setName(IO.getString("Enter " + type + " name: "));
+    subscription.setCost(IO.getDouble("Enter " + type + " cost: ", null));
+    
+    if(subscription instanceof Supplement supplement){
+      ArrayList<Subscription> magazines = new ArrayList<>();
+
+      magazines.addAll(Subscription.filterSubscription(subscriptions.values(), Magazine.class));
+
+      displayTable(
+        Subscription.TABLE_COLUMN, 
+        Subscription.TABLE_COLUMN_NAME, 
+        magazines, 
+        e->e.display()
+      );
+      
+      IO.println("");
+      
+      Subscription magazine = subscriptions.get(IO.getInt("Select one of the magazine: ", null));
+
+      if(magazine == null){
+        IO.printText("", "Magazine does not exist");
+        prompt(null);
+        return;
+      }
+      else if(!magazines.contains(magazine)){
+        IO.printText("", magazine.getName() + " is not a magazine");
+        prompt(null);
+        return;
+      }
+      else{
+        supplement.setMagazine((Magazine) magazine);
+      }
+    }
+
+    subscriptions.put(subscription.getId(), subscription);
+    IO.printText("", type + " " + subscription.getName() + " created.");
+    prompt(null);
+  }
+
+  public static void deleteMagazineSupplement(TreeMap<Integer, Subscription> subscriptions, TreeMap<Integer, Customer> customers){
+    ANSI.clear();
+    ANSI.homePosition();
+    IO.printText("DELETE MAGAZINE / SUPPLEMENT", "");
+    
+    displayTable(
+      Subscription.TABLE_COLUMN, 
+      Subscription.TABLE_COLUMN_NAME, 
+      subscriptions.values(), 
+      e->e.display()
+    );
+    
+    Subscription subscription = subscriptions.get(IO.getInt("Select one of the magazine / supplement: ", null));
+    
+    if(subscription == null){
+      IO.printText("", "Magazine / Supplement does not exist");
+      prompt(null);
+      return;
+    }
+    else if(subscription instanceof Magazine magazine){
+      subscriptions.values().removeIf(e->e.isSupplement() ? e.getMagazine().equals(magazine) : e.equals(magazine));
+
+      IO.printText("", "Magazine " + magazine.getName() + " along with its subscriptions deleted successfully.");
+    }
+    else{
+      subscriptions.remove(subscription.getId());
+      IO.printText("", "Supplement " + subscription.getName() + " deleted successfully.");
+    }
+    
+    for(Customer customer : customers.values()){
+      if(subscription.isSupplement()){
+        customer.removeSubscription(subscription);
+      }
+      else{
+        for(Subscription c_subscription : customer.getSubscriptions()){
+          if((c_subscription.isSupplement() && c_subscription.getMagazine().equals(subscription)) || c_subscription.equals(subscription)){
+            customer.removeSubscription(c_subscription);
+          }
+        }
+      }
+    }
+    
     prompt(null);
   }
 }

@@ -1,5 +1,5 @@
 const d = document
 
-export const $ = d.querySelector.bind(d)
+window.$ = d.querySelector.bind(d)
 
-export const _ = d.getElementById.bind(d)
+window._ = d.getElementById.bind(d)

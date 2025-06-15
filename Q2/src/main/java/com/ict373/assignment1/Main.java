@@ -48,7 +48,9 @@ public class Main{
 					case 8 -> Page.viewMagazineSupplement(subscriptions);
 					case 9 -> Page.addSubscription(subscriptions, customers);
 					case 10 -> Page.removeSubscription(subscriptions, customers);
-					case 11 -> options = 0;
+					case 11 -> Page.createMagazineSupplement(subscriptions);
+					case 12 -> Page.deleteMagazineSupplement(subscriptions, customers);
+					case 13 -> options = 0;
 					default -> {
 						options = -1;
 						IO.println("Selection unavailable.");
